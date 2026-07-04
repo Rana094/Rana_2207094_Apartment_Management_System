@@ -9,11 +9,7 @@ class DashboardController extends Controller
 {
     public function resident(Request $request): View
     {
-        return view('dashboards.placeholder', [
-            'title' => 'Resident Dashboard',
-            'message' => 'Resident backend access is ready. The frontend dashboard can be connected here.',
-            'user' => $request->user(),
-        ]);
+        return view('resident.dashboard');
     }
 
     public function manager(Request $request): View

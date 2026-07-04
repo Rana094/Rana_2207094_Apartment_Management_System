@@ -52,6 +52,28 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->middleware('role:resident')
         ->name('resident.dashboard');
 
+    Route::prefix('resident')
+        ->name('resident.')
+        ->middleware('role:resident')
+        ->group(function () {
+            Route::get('/flat', function () { return view('resident.flat'); })->name('flat');
+            Route::get('/bills', function () { return view('resident.bills.index'); })->name('bills.index');
+            Route::get('/bills/{id}', function () { return view('resident.bills.show'); })->name('bills.show');
+            Route::get('/bills/{id}/upload', function () { return view('resident.bills.upload'); })->name('bills.upload');
+            Route::get('/complaints', function () { return view('resident.complaints.index'); })->name('complaints.index');
+            Route::get('/complaints/create', function () { return view('resident.complaints.create'); })->name('complaints.create');
+            Route::get('/complaints/{id}', function () { return view('resident.complaints.show'); })->name('complaints.show');
+            Route::get('/visitors', function () { return view('resident.visitors.index'); })->name('visitors.index');
+            Route::get('/visitors/create', function () { return view('resident.visitors.create'); })->name('visitors.create');
+            Route::get('/bookings', function () { return view('resident.bookings.index'); })->name('bookings.index');
+            Route::get('/bookings/create', function () { return view('resident.bookings.create'); })->name('bookings.create');
+            Route::get('/polls', function () { return view('resident.polls'); })->name('polls');
+            Route::get('/emergency', function () { return view('resident.emergency'); })->name('emergency');
+            Route::get('/documents', function () { return view('resident.documents'); })->name('documents');
+            Route::get('/move-out', function () { return view('resident.move-out'); })->name('move-out');
+            Route::get('/profile', function () { return view('resident.profile'); })->name('profile');
+        });
+
     Route::get('/manager/dashboard', [DashboardController::class, 'manager'])
         ->middleware('role:manager')
         ->name('manager.dashboard');
