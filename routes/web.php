@@ -19,6 +19,11 @@ Route::get('/contact', function () {
     return view('contact');
 });
 
+Route::get('/dashboard-preview', function () {
+    $role = request('role', 'resident');
+    return view('dashboard-preview', compact('role'));
+});
+
 Route::get('/waiting-approval', [EmailVerificationController::class, 'notice'])->name('approval.pending');
 
 // Authentication Routes
