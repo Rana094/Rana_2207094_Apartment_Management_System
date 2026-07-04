@@ -5,6 +5,8 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -76,5 +78,35 @@ class User extends Authenticatable implements MustVerifyEmail
             'staff' => 'maintenance.dashboard',
             default => 'resident.dashboard',
         };
+    }
+
+    public function residentProfile(): HasOne
+    {
+        return $this->hasOne(ResidentProfile::class);
+    }
+
+    public function staffProfile(): HasOne
+    {
+        return $this->hasOne(StaffProfile::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class, 'resident_id');
+    }
+
+    public function assignedWorkOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class, 'assigned_to');
+    }
+
+    public function createdWorkOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class, 'assigned_by');
     }
 }
