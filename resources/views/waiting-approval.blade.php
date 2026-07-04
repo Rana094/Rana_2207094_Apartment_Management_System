@@ -121,6 +121,11 @@
         </div>
         
         <h1 class="status-title">Account Registration Submitted</h1>
+        @if (session('status'))
+            <div style="background: var(--bg-approved); color: var(--color-approved); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                {{ session('status') }}
+            </div>
+        @endif
         <p class="status-desc">
             Your account is waiting for email verification and manager approval. Once verified and approved by the building management, your portal access will be unlocked.
         </p>
@@ -161,9 +166,16 @@
         
         <!-- Interactive Mock Actions -->
         <div class="flex flex-col gap-3">
-            <a href="#" class="btn btn-primary" style="justify-content: center;" onclick="alert('Verification email has been resent to your inbox!'); return false;">
-                Resend Verification Email
-            </a>
+            @auth
+                @if (! auth()->user()->hasVerifiedEmail())
+                    <form method="POST" action="{{ route('verification.send') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;">
+                            Resend Verification Email
+                        </button>
+                    </form>
+                @endif
+            @endauth
             
             <div style="display: flex; gap: 1rem; width: 100%;">
                 <a href="{{ url('/') }}" class="btn btn-outline" style="flex: 1; justify-content: center;">

@@ -98,14 +98,26 @@
             </button>
         </div>
         
-        <form action="#" method="POST" id="login-form">
+        @if ($errors->any())
+            <div style="background: var(--bg-rejected); color: var(--color-rejected); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        @if (session('status'))
+            <div style="background: var(--bg-approved); color: var(--color-approved); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <form action="{{ route('login.store') }}" method="POST" id="login-form">
             @csrf
             <!-- Hidden Role Input to pass role selection to backend -->
-            <input type="hidden" name="role" id="selected-role" value="resident">
+            <input type="hidden" name="role" id="selected-role" value="{{ old('role', 'resident') }}">
             
             <div class="form-group">
                 <label for="login-email" class="form-label">Email Address</label>
-                <input type="email" id="login-email" name="email" class="form-control" placeholder="e.g. resident@nestora.com" required autocomplete="email" autofocus>
+                <input type="email" id="login-email" name="email" class="form-control" placeholder="e.g. resident@nestora.com" value="{{ old('email') }}" required autocomplete="email" autofocus>
             </div>
             
             <div class="form-group">
