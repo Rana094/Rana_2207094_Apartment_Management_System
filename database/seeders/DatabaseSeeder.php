@@ -15,11 +15,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $users = [
+            ['Building Manager', 'manager@nestora.com', 'manager', 'approved'],
+            ['Security Guard', 'security@nestora.com', 'security', 'approved'],
+            ['Maintenance Staff', 'staff@nestora.com', 'staff', 'approved'],
+            ['Approved Resident', 'resident@nestora.com', 'resident', 'approved'],
+            ['Pending Resident', 'pending@nestora.com', 'resident', 'pending_approval'],
+        ];
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        foreach ($users as [$name, $email, $role, $status]) {
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => $name,
+                    'phone' => '+880 1700 000000',
+                    'password' => 'password',
+                    'role' => $role,
+                    'status' => $status,
+                    'resident_type' => $role === 'resident' ? 'owner' : null,
+                    'flat_info' => $role === 'resident' ? 'Building A, Flat 1A' : null,
+                    'email_verified_at' => now(),
+                    'approved_at' => $status === 'approved' ? now() : null,
+                ]
+            );
+        }
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -21,7 +21,17 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'email_verified_at',
         'password',
+        'role',
+        'status',
+        'resident_type',
+        'flat_info',
+        'document_path',
+        'approved_at',
+        'approved_by',
+        'rejection_reason',
     ];
 
     /**
@@ -43,7 +53,28 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'approved_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isResident(): bool
+    {
+        return $this->role === 'resident';
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === 'approved' && $this->approved_at !== null;
+    }
+
+    public function dashboardRouteName(): string
+    {
+        return match ($this->role) {
+            'manager' => 'manager.dashboard',
+            'security' => 'security.dashboard',
+            'staff' => 'maintenance.dashboard',
+            default => 'resident.dashboard',
+        };
     }
 }

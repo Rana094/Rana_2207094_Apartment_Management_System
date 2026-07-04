@@ -75,25 +75,31 @@
             <p style="color: var(--text-secondary); font-size: 0.95rem;">Join Nestora. Enter your flat details to request access from your building manager.</p>
         </div>
         
-        <!-- Action redirects to waiting-approval route for frontend presentation -->
-        <form action="{{ url('/waiting-approval') }}" method="GET" enctype="multipart/form-data">
+        @if ($errors->any())
+            <div style="background: var(--bg-rejected); color: var(--color-rejected); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                {{ $errors->first() }}
+            </div>
+        @endif
+
+        <form action="{{ route('register.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
             <!-- Full Name -->
             <div class="form-group">
                 <label for="reg-name" class="form-label">Full Name</label>
-                <input type="text" id="reg-name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+                <input type="text" id="reg-name" name="name" class="form-control" placeholder="e.g. John Doe" value="{{ old('name') }}" required>
             </div>
             
             <div class="grid grid-2">
                 <!-- Email -->
                 <div class="form-group">
                     <label for="reg-email" class="form-label">Email Address</label>
-                    <input type="email" id="reg-email" name="email" class="form-control" placeholder="e.g. john@example.com" required autocomplete="email">
+                    <input type="email" id="reg-email" name="email" class="form-control" placeholder="e.g. john@example.com" value="{{ old('email') }}" required autocomplete="email">
                 </div>
                 
                 <!-- Phone -->
                 <div class="form-group">
                     <label for="reg-phone" class="form-label">Phone Number</label>
-                    <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="e.g. +880 1711 223344" required>
+                    <input type="tel" id="reg-phone" name="phone" class="form-control" placeholder="e.g. +880 1711 223344" value="{{ old('phone') }}" required>
                 </div>
             </div>
             
@@ -117,15 +123,15 @@
                     <label for="reg-type" class="form-label">Resident Type</label>
                     <select id="reg-type" name="resident_type" class="form-control form-select" required>
                         <option value="" disabled selected>Select status...</option>
-                        <option value="owner">Flat Owner</option>
-                        <option value="tenant">Tenant / Renting</option>
+                        <option value="owner" @selected(old('resident_type') === 'owner')>Flat Owner</option>
+                        <option value="tenant" @selected(old('resident_type') === 'tenant')>Tenant / Renting</option>
                     </select>
                 </div>
                 
                 <!-- Flat Information -->
                 <div class="form-group">
                     <label for="reg-flat" class="form-label">Flat / Unit Number</label>
-                    <input type="text" id="reg-flat" name="flat_info" class="form-control" placeholder="e.g. Building B, Flat 4D" required>
+                    <input type="text" id="reg-flat" name="flat_info" class="form-control" placeholder="e.g. Building B, Flat 4D" value="{{ old('flat_info') }}" required>
                 </div>
             </div>
             
