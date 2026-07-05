@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
+use App\Http\Controllers\Resident\ResidentPortalController;
 use Illuminate\Support\Facades\Route;
 
 // Public Front-Facing Routes
@@ -56,22 +57,32 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('resident.')
         ->middleware('role:resident')
         ->group(function () {
-            Route::get('/flat', function () { return view('resident.flat'); })->name('flat');
-            Route::get('/bills', function () { return view('resident.bills.index'); })->name('bills.index');
-            Route::get('/bills/{id}', function () { return view('resident.bills.show'); })->name('bills.show');
-            Route::get('/bills/{id}/upload', function () { return view('resident.bills.upload'); })->name('bills.upload');
-            Route::get('/complaints', function () { return view('resident.complaints.index'); })->name('complaints.index');
-            Route::get('/complaints/create', function () { return view('resident.complaints.create'); })->name('complaints.create');
-            Route::get('/complaints/{id}', function () { return view('resident.complaints.show'); })->name('complaints.show');
-            Route::get('/visitors', function () { return view('resident.visitors.index'); })->name('visitors.index');
-            Route::get('/visitors/create', function () { return view('resident.visitors.create'); })->name('visitors.create');
-            Route::get('/bookings', function () { return view('resident.bookings.index'); })->name('bookings.index');
-            Route::get('/bookings/create', function () { return view('resident.bookings.create'); })->name('bookings.create');
-            Route::get('/polls', function () { return view('resident.polls'); })->name('polls');
-            Route::get('/emergency', function () { return view('resident.emergency'); })->name('emergency');
-            Route::get('/documents', function () { return view('resident.documents'); })->name('documents');
-            Route::get('/move-out', function () { return view('resident.move-out'); })->name('move-out');
-            Route::get('/profile', function () { return view('resident.profile'); })->name('profile');
+            Route::get('/flat', [ResidentPortalController::class, 'flat'])->name('flat');
+            Route::get('/bills', [ResidentPortalController::class, 'bills'])->name('bills.index');
+            Route::get('/bills/{bill}', [ResidentPortalController::class, 'bill'])->name('bills.show');
+            Route::get('/bills/{bill}/upload', [ResidentPortalController::class, 'uploadPaymentProof'])->name('bills.upload');
+            Route::post('/bills/{bill}/payment-proofs', [ResidentPortalController::class, 'storePaymentProof'])->name('bills.payment-proofs.store');
+            Route::get('/complaints', [ResidentPortalController::class, 'complaints'])->name('complaints.index');
+            Route::get('/complaints/create', [ResidentPortalController::class, 'createComplaint'])->name('complaints.create');
+            Route::post('/complaints', [ResidentPortalController::class, 'storeComplaint'])->name('complaints.store');
+            Route::get('/complaints/{complaint}', [ResidentPortalController::class, 'complaint'])->name('complaints.show');
+            Route::get('/visitors', [ResidentPortalController::class, 'visitors'])->name('visitors.index');
+            Route::get('/visitors/create', [ResidentPortalController::class, 'createVisitor'])->name('visitors.create');
+            Route::post('/visitors', [ResidentPortalController::class, 'storeVisitor'])->name('visitors.store');
+            Route::get('/bookings', [ResidentPortalController::class, 'bookings'])->name('bookings.index');
+            Route::get('/bookings/create', [ResidentPortalController::class, 'createBooking'])->name('bookings.create');
+            Route::post('/bookings', [ResidentPortalController::class, 'storeBooking'])->name('bookings.store');
+            Route::get('/polls', [ResidentPortalController::class, 'polls'])->name('polls');
+            Route::post('/polls/{poll}/vote', [ResidentPortalController::class, 'vote'])->name('polls.vote');
+            Route::get('/emergency', [ResidentPortalController::class, 'emergency'])->name('emergency');
+            Route::post('/emergency', [ResidentPortalController::class, 'storeEmergency'])->name('emergency.store');
+            Route::get('/documents', [ResidentPortalController::class, 'documents'])->name('documents');
+            Route::post('/documents', [ResidentPortalController::class, 'storeDocument'])->name('documents.store');
+            Route::get('/move-out', [ResidentPortalController::class, 'moveOut'])->name('move-out');
+            Route::post('/move-out', [ResidentPortalController::class, 'storeMoveOut'])->name('move-out.store');
+            Route::get('/profile', [ResidentPortalController::class, 'profile'])->name('profile');
+            Route::put('/profile', [ResidentPortalController::class, 'updateProfile'])->name('profile.update');
+            Route::put('/profile/password', [ResidentPortalController::class, 'updatePassword'])->name('profile.password.update');
         });
 
     Route::get('/manager/dashboard', [DashboardController::class, 'manager'])

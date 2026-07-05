@@ -9,7 +9,18 @@ class DashboardController extends Controller
 {
     public function resident(Request $request): View
     {
-        return view('resident.dashboard');
+        $user = $request->user();
+        $profile = $user->residentProfile()->with('flat.building')->first();
+
+        return view('resident.dashboard', [
+            'user' => $user,
+            'profile' => $profile,
+            'flat' => $profile?->flat,
+            'currentBills' => $user->bills()->latest('due_date')->take(5)->get(),
+            'activeComplaints' => $user->complaints()->whereIn('status', ['open', 'in_progress'])->latest()->take(5)->get(),
+            'upcomingBookings' => $user->facilityBookings()->with('facility')->whereDate('booking_date', '>=', today())->take(5)->get(),
+            'recentVisitors' => $user->visitorRequests()->latest('visit_date')->take(5)->get(),
+        ]);
     }
 
     public function manager(Request $request): View

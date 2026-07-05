@@ -3,14 +3,23 @@
 namespace Database\Seeders;
 
 use App\Models\Building;
+use App\Models\Bill;
 use App\Models\Complaint;
 use App\Models\Document;
+use App\Models\EmergencyRequest;
+use App\Models\Facility;
+use App\Models\FacilityBooking;
 use App\Models\Flat;
 use App\Models\FlatMember;
+use App\Models\MoveOutRequest;
+use App\Models\Notice;
+use App\Models\Poll;
+use App\Models\PollOption;
 use App\Models\ResidentProfile;
 use App\Models\StaffProfile;
 use App\Models\User;
 use App\Models\VehicleRegistration;
+use App\Models\VisitorRequest;
 use App\Models\WorkOrder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -173,6 +182,143 @@ class DatabaseSeeder extends Seeder
                 'priority' => 'high',
                 'status' => 'todo',
                 'due_at' => now()->addDay(),
+            ]
+        );
+
+        Bill::updateOrCreate(
+            ['bill_number' => 'BILL-2026-07-1A'],
+            [
+                'resident_id' => $resident->id,
+                'flat_id' => $flatOne->id,
+                'billing_month' => now()->startOfMonth()->toDateString(),
+                'type' => 'monthly_service_charge',
+                'amount' => 4500,
+                'due_date' => now()->startOfMonth()->addDays(9)->toDateString(),
+                'status' => 'unpaid',
+            ]
+        );
+
+        Bill::updateOrCreate(
+            ['bill_number' => 'BILL-2026-06-1A'],
+            [
+                'resident_id' => $resident->id,
+                'flat_id' => $flatOne->id,
+                'billing_month' => now()->subMonth()->startOfMonth()->toDateString(),
+                'type' => 'monthly_service_charge',
+                'amount' => 4500,
+                'due_date' => now()->subMonth()->startOfMonth()->addDays(9)->toDateString(),
+                'status' => 'paid',
+                'paid_at' => now()->subMonth()->startOfMonth()->addDays(5),
+            ]
+        );
+
+        VisitorRequest::updateOrCreate(
+            ['access_code' => 'VISIT123'],
+            [
+                'resident_id' => $resident->id,
+                'flat_id' => $flatOne->id,
+                'visitor_name' => 'Tanvir Ahmed',
+                'visitor_phone' => '+880 1811 222333',
+                'purpose' => 'Family visit',
+                'visit_date' => now()->addDay()->toDateString(),
+                'expected_entry_time' => '18:00',
+                'status' => 'approved',
+            ]
+        );
+
+        $communityHall = Facility::updateOrCreate(
+            ['name' => 'Community Hall'],
+            [
+                'description' => 'Shared hall for resident programs and family events.',
+                'capacity' => 80,
+                'booking_fee' => 2500,
+                'status' => 'available',
+            ]
+        );
+
+        $gym = Facility::updateOrCreate(
+            ['name' => 'Gym'],
+            [
+                'description' => 'Resident fitness facility.',
+                'capacity' => 20,
+                'booking_fee' => 0,
+                'status' => 'available',
+            ]
+        );
+
+        Facility::updateOrCreate(
+            ['name' => 'Rooftop BBQ Grill Station'],
+            [
+                'description' => 'Open rooftop cooking and gathering station.',
+                'capacity' => 25,
+                'booking_fee' => 1500,
+                'status' => 'available',
+            ]
+        );
+
+        FacilityBooking::updateOrCreate(
+            ['resident_id' => $resident->id, 'facility_id' => $communityHall->id, 'booking_date' => now()->addWeek()->toDateString()],
+            [
+                'start_time' => '18:00',
+                'end_time' => '21:00',
+                'purpose' => 'Family gathering',
+                'status' => 'pending',
+            ]
+        );
+
+        FacilityBooking::updateOrCreate(
+            ['resident_id' => $resident->id, 'facility_id' => $gym->id, 'booking_date' => now()->addDays(2)->toDateString()],
+            [
+                'start_time' => '07:00',
+                'end_time' => '08:00',
+                'purpose' => 'Morning workout',
+                'status' => 'approved',
+            ]
+        );
+
+        $poll = Poll::updateOrCreate(
+            ['title' => 'Install rooftop solar panels?'],
+            [
+                'description' => 'Vote on using service funds for rooftop solar panels powering common lobby lights.',
+                'status' => 'active',
+                'starts_at' => now()->subDay(),
+                'ends_at' => now()->addDays(10),
+            ]
+        );
+
+        foreach (['Yes, approve installation', 'No, keep current setup', 'Abstain'] as $label) {
+            PollOption::updateOrCreate(
+                ['poll_id' => $poll->id, 'label' => $label],
+                []
+            );
+        }
+
+        EmergencyRequest::updateOrCreate(
+            ['resident_id' => $resident->id, 'type' => 'maintenance', 'created_at' => now()->subDays(3)],
+            [
+                'flat_id' => $flatOne->id,
+                'message' => 'Elevator stopped briefly near floor one.',
+                'status' => 'resolved',
+                'resolved_at' => now()->subDays(2),
+            ]
+        );
+
+        MoveOutRequest::updateOrCreate(
+            ['resident_id' => $resident->id, 'requested_move_out_date' => now()->addMonths(3)->toDateString()],
+            [
+                'flat_id' => $flatOne->id,
+                'reason' => 'Tentative move-out planning request for manager review.',
+                'status' => 'pending',
+            ]
+        );
+
+        Notice::updateOrCreate(
+            ['title' => 'Water tank cleaning schedule'],
+            [
+                'created_by' => $manager->id,
+                'body' => 'The main water tank will be cleaned this Friday between 10 AM and 2 PM.',
+                'audience' => 'all',
+                'published_at' => now()->subDay(),
             ]
         );
     }
