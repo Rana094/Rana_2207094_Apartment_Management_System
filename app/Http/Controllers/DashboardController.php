@@ -25,11 +25,7 @@ class DashboardController extends Controller
 
     public function manager(Request $request): View
     {
-        return view('dashboards.placeholder', [
-            'title' => 'Building Manager Dashboard',
-            'message' => 'Manager backend access is ready, including resident approval routes.',
-            'user' => $request->user(),
-        ]);
+        return view('manager.dashboard');
     }
 
     public function security(Request $request): View
