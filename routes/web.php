@@ -107,5 +107,24 @@ Route::middleware(['auth', 'approved'])->group(function () {
                 ->name('resident-approvals.approve');
             Route::post('/resident-approvals/{resident}/reject', [ResidentApprovalController::class, 'reject'])
                 ->name('resident-approvals.reject');
+
+            Route::get('/residents', function () { return view('manager.residents.index'); })->name('residents.index');
+            Route::get('/residents/{id}', function () { return view('manager.residents.show'); })->name('residents.show');
+            Route::get('/flats', function () { return view('manager.flats.index'); })->name('flats.index');
+            Route::get('/flats/create', function () { return view('manager.flats.form'); })->name('flats.create');
+            Route::get('/flats/{id}/edit', function () { return view('manager.flats.form', ['flat' => ['block' => 'A', 'occupancy' => 'owner']]); })->name('flats.edit');
+            Route::get('/bills/generate', function () { return view('manager.bills.generate'); })->name('bills.generate');
+            Route::get('/bills', function () { return view('manager.bills.index'); })->name('bills.index');
+            Route::get('/payments', function () { return view('manager.payments.index'); })->name('payments.index');
+            Route::get('/payments/{id}', function () { return view('manager.payments.show'); })->name('payments.show');
+            Route::get('/reports', function () { return view('manager.reports.financial'); })->name('reports.financial');
+            Route::get('/complaints', function () { return view('manager.complaints.index'); })->name('complaints.index');
+            Route::get('/complaints/{id}/assign', function () { return view('manager.complaints.assign'); })->name('complaints.assign');
+            Route::get('/staff', function () { return view('manager.staff'); })->name('staff');
+            Route::get('/bookings', function () { return view('manager.bookings'); })->name('bookings.index');
+            Route::get('/polls', function () { return view('manager.polls'); })->name('polls');
+            Route::get('/polls/create', function () { return view('manager.polls'); })->name('polls.create');
+            Route::get('/emergencies', function () { return view('manager.emergencies'); })->name('emergencies.index');
+            Route::get('/notices', function () { return view('manager.notices'); })->name('notices.index');
         });
 });
