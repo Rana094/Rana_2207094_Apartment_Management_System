@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\Resident\ResidentPortalController;
 use Illuminate\Support\Facades\Route;
@@ -85,7 +86,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::put('/profile/password', [ResidentPortalController::class, 'updatePassword'])->name('profile.password.update');
         });
 
-    Route::get('/manager/dashboard', [DashboardController::class, 'manager'])
+    Route::get('/manager/dashboard', [ManagerPortalController::class, 'dashboard'])
         ->middleware('role:manager')
         ->name('manager.dashboard');
 
@@ -108,23 +109,33 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::post('/resident-approvals/{resident}/reject', [ResidentApprovalController::class, 'reject'])
                 ->name('resident-approvals.reject');
 
-            Route::get('/residents', function () { return view('manager.residents.index'); })->name('residents.index');
-            Route::get('/residents/{id}', function () { return view('manager.residents.show'); })->name('residents.show');
-            Route::get('/flats', function () { return view('manager.flats.index'); })->name('flats.index');
-            Route::get('/flats/create', function () { return view('manager.flats.form'); })->name('flats.create');
-            Route::get('/flats/{id}/edit', function () { return view('manager.flats.form', ['flat' => ['block' => 'A', 'occupancy' => 'owner']]); })->name('flats.edit');
-            Route::get('/bills/generate', function () { return view('manager.bills.generate'); })->name('bills.generate');
-            Route::get('/bills', function () { return view('manager.bills.index'); })->name('bills.index');
-            Route::get('/payments', function () { return view('manager.payments.index'); })->name('payments.index');
-            Route::get('/payments/{id}', function () { return view('manager.payments.show'); })->name('payments.show');
-            Route::get('/reports', function () { return view('manager.reports.financial'); })->name('reports.financial');
-            Route::get('/complaints', function () { return view('manager.complaints.index'); })->name('complaints.index');
-            Route::get('/complaints/{id}/assign', function () { return view('manager.complaints.assign'); })->name('complaints.assign');
-            Route::get('/staff', function () { return view('manager.staff'); })->name('staff');
-            Route::get('/bookings', function () { return view('manager.bookings'); })->name('bookings.index');
-            Route::get('/polls', function () { return view('manager.polls'); })->name('polls');
-            Route::get('/polls/create', function () { return view('manager.polls'); })->name('polls.create');
-            Route::get('/emergencies', function () { return view('manager.emergencies'); })->name('emergencies.index');
-            Route::get('/notices', function () { return view('manager.notices'); })->name('notices.index');
+            Route::get('/residents', [ManagerPortalController::class, 'residents'])->name('residents.index');
+            Route::get('/residents/{resident}', [ManagerPortalController::class, 'resident'])->name('residents.show');
+            Route::get('/flats', [ManagerPortalController::class, 'flats'])->name('flats.index');
+            Route::get('/flats/create', [ManagerPortalController::class, 'createFlat'])->name('flats.create');
+            Route::post('/flats', [ManagerPortalController::class, 'storeFlat'])->name('flats.store');
+            Route::get('/flats/{flat}/edit', [ManagerPortalController::class, 'editFlat'])->name('flats.edit');
+            Route::put('/flats/{flat}', [ManagerPortalController::class, 'updateFlat'])->name('flats.update');
+            Route::get('/bills/generate', [ManagerPortalController::class, 'generateBill'])->name('bills.generate');
+            Route::post('/bills/generate', [ManagerPortalController::class, 'storeBill'])->name('bills.store');
+            Route::get('/bills', [ManagerPortalController::class, 'bills'])->name('bills.index');
+            Route::get('/payments', [ManagerPortalController::class, 'payments'])->name('payments.index');
+            Route::get('/payments/{payment}', [ManagerPortalController::class, 'payment'])->name('payments.show');
+            Route::post('/payments/{paymentProof}/verify', [ManagerPortalController::class, 'verifyPayment'])->name('payments.verify');
+            Route::get('/reports', [ManagerPortalController::class, 'reports'])->name('reports.financial');
+            Route::get('/complaints', [ManagerPortalController::class, 'complaints'])->name('complaints.index');
+            Route::get('/complaints/{complaint}/assign', [ManagerPortalController::class, 'assignComplaint'])->name('complaints.assign');
+            Route::post('/complaints/{complaint}/assign', [ManagerPortalController::class, 'storeWorkOrder'])->name('complaints.work-orders.store');
+            Route::get('/staff', [ManagerPortalController::class, 'staff'])->name('staff');
+            Route::post('/staff', [ManagerPortalController::class, 'storeStaff'])->name('staff.store');
+            Route::get('/bookings', [ManagerPortalController::class, 'bookings'])->name('bookings.index');
+            Route::post('/bookings/{booking}/status', [ManagerPortalController::class, 'updateBooking'])->name('bookings.status');
+            Route::get('/polls', [ManagerPortalController::class, 'polls'])->name('polls');
+            Route::post('/polls', [ManagerPortalController::class, 'storePoll'])->name('polls.store');
+            Route::get('/polls/create', [ManagerPortalController::class, 'polls'])->name('polls.create');
+            Route::get('/emergencies', [ManagerPortalController::class, 'emergencies'])->name('emergencies.index');
+            Route::post('/emergencies/{emergency}/status', [ManagerPortalController::class, 'updateEmergency'])->name('emergencies.status');
+            Route::get('/notices', [ManagerPortalController::class, 'notices'])->name('notices.index');
+            Route::post('/notices', [ManagerPortalController::class, 'storeNotice'])->name('notices.store');
         });
 });

@@ -135,6 +135,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(MoveOutRequest::class, 'resident_id');
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
     public function assignedWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_to');
