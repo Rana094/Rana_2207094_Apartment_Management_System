@@ -5,9 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class VisitorRequest extends Model
+class SecurityIncident extends Model
 {
     use HasFactory;
 
@@ -16,24 +15,18 @@ class VisitorRequest extends Model
     protected function casts(): array
     {
         return [
-            'visit_date' => 'date',
-            'checked_in_at' => 'datetime',
-            'checked_out_at' => 'datetime',
+            'occurred_at' => 'datetime',
+            'resolved_at' => 'datetime',
         ];
     }
 
-    public function resident(): BelongsTo
+    public function reporter(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'resident_id');
+        return $this->belongsTo(User::class, 'reported_by');
     }
 
     public function flat(): BelongsTo
     {
         return $this->belongsTo(Flat::class);
-    }
-
-    public function logs(): HasMany
-    {
-        return $this->hasMany(VisitorLog::class);
     }
 }
