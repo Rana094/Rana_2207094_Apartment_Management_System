@@ -30,11 +30,7 @@ class DashboardController extends Controller
 
     public function security(Request $request): View
     {
-        return view('dashboards.placeholder', [
-            'title' => 'Security Guard Dashboard',
-            'message' => 'Security backend access is ready.',
-            'user' => $request->user(),
-        ]);
+        return view('security.dashboard');
     }
 
     public function maintenance(Request $request): View
