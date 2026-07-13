@@ -6,6 +6,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\Resident\ResidentPortalController;
+use App\Http\Controllers\Security\SecurityPortalController;
 use Illuminate\Support\Facades\Route;
 
 // Public Front-Facing Routes
@@ -94,12 +95,16 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('security.')
         ->middleware('role:security')
         ->group(function () {
-            Route::get('/dashboard', [DashboardController::class, 'security'])->name('dashboard');
-            Route::get('/checkin', function () { return view('security.checkin'); })->name('checkin');
-            Route::get('/checkout', function () { return view('security.checkout'); })->name('checkout');
-            Route::get('/logs', function () { return view('security.logs'); })->name('logs');
-            Route::get('/emergency', function () { return view('security.emergency'); })->name('emergency');
-            Route::get('/incidents', function () { return view('security.incidents'); })->name('incidents');
+            Route::get('/dashboard', [SecurityPortalController::class, 'dashboard'])->name('dashboard');
+            Route::get('/checkin', [SecurityPortalController::class, 'checkin'])->name('checkin');
+            Route::post('/checkin', [SecurityPortalController::class, 'storeCheckin'])->name('checkin.store');
+            Route::get('/checkout', [SecurityPortalController::class, 'checkout'])->name('checkout');
+            Route::post('/checkout', [SecurityPortalController::class, 'storeCheckout'])->name('checkout.store');
+            Route::get('/logs', [SecurityPortalController::class, 'logs'])->name('logs');
+            Route::get('/emergency', [SecurityPortalController::class, 'emergency'])->name('emergency');
+            Route::post('/emergency', [SecurityPortalController::class, 'triggerEmergency'])->name('emergency.store');
+            Route::get('/incidents', [SecurityPortalController::class, 'incidents'])->name('incidents');
+            Route::post('/incidents', [SecurityPortalController::class, 'storeIncident'])->name('incidents.store');
         });
 
     Route::get('/maintenance/dashboard', [DashboardController::class, 'maintenance'])

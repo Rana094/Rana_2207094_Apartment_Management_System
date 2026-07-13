@@ -16,9 +16,11 @@ use App\Models\Notice;
 use App\Models\Poll;
 use App\Models\PollOption;
 use App\Models\ResidentProfile;
+use App\Models\SecurityIncident;
 use App\Models\StaffProfile;
 use App\Models\User;
 use App\Models\VehicleRegistration;
+use App\Models\VisitorLog;
 use App\Models\VisitorRequest;
 use App\Models\WorkOrder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -226,6 +228,35 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $checkedInVisitor = VisitorRequest::updateOrCreate(
+            ['access_code' => 'N-5509'],
+            [
+                'resident_id' => $resident->id,
+                'flat_id' => $flatOne->id,
+                'visitor_name' => 'Farhan Alvi',
+                'visitor_phone' => '+880 1811 777888',
+                'purpose' => 'Courier delivery',
+                'visit_date' => today(),
+                'expected_entry_time' => now()->subHour()->format('H:i'),
+                'status' => 'checked_in',
+                'checked_in_at' => now()->subMinutes(45),
+            ]
+        );
+
+        VisitorLog::updateOrCreate(
+            ['visitor_request_id' => $checkedInVisitor->id, 'event_type' => 'check_in'],
+            [
+                'flat_id' => $flatOne->id,
+                'security_user_id' => $security->id,
+                'visitor_name' => $checkedInVisitor->visitor_name,
+                'visitor_phone' => $checkedInVisitor->visitor_phone,
+                'access_code' => $checkedInVisitor->access_code,
+                'purpose' => $checkedInVisitor->purpose,
+                'vehicle_plate' => null,
+                'occurred_at' => now()->subMinutes(45),
+            ]
+        );
+
         $communityHall = Facility::updateOrCreate(
             ['name' => 'Community Hall'],
             [
@@ -319,6 +350,18 @@ class DatabaseSeeder extends Seeder
                 'body' => 'The main water tank will be cleaned this Friday between 10 AM and 2 PM.',
                 'audience' => 'all',
                 'published_at' => now()->subDay(),
+            ]
+        );
+
+        SecurityIncident::updateOrCreate(
+            ['subject' => 'Unauthorized parking block'],
+            [
+                'reported_by' => $security->id,
+                'flat_id' => $flatOne->id,
+                'category' => 'parking',
+                'description' => 'A visitor vehicle temporarily blocked the basement ramp.',
+                'status' => 'open',
+                'occurred_at' => now()->subHours(3),
             ]
         );
     }
