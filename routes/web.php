@@ -90,9 +90,17 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->middleware('role:manager')
         ->name('manager.dashboard');
 
-    Route::get('/security/dashboard', [DashboardController::class, 'security'])
+    Route::prefix('security')
+        ->name('security.')
         ->middleware('role:security')
-        ->name('security.dashboard');
+        ->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'security'])->name('dashboard');
+            Route::get('/checkin', function () { return view('security.checkin'); })->name('checkin');
+            Route::get('/checkout', function () { return view('security.checkout'); })->name('checkout');
+            Route::get('/logs', function () { return view('security.logs'); })->name('logs');
+            Route::get('/emergency', function () { return view('security.emergency'); })->name('emergency');
+            Route::get('/incidents', function () { return view('security.incidents'); })->name('incidents');
+        });
 
     Route::get('/maintenance/dashboard', [DashboardController::class, 'maintenance'])
         ->middleware('role:staff')
