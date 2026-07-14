@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\Maintenance\MaintenancePortalController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\Resident\ResidentPortalController;
@@ -111,17 +112,20 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('maintenance.')
         ->middleware('role:staff')
         ->group(function () {
-            Route::get('/', [DashboardController::class, 'maintenance'])->name('dashboard');
-            Route::get('/dashboard', [DashboardController::class, 'maintenance']);
-            Route::get('/work-orders', function () { return view('maintenance.dashboard'); })->name('work-orders');
-            Route::get('/work-orders/in-progress', function () { return view('maintenance.dashboard'); })->name('work-orders.in-progress');
-            Route::get('/work-orders/completed', function () { return view('maintenance.history'); })->name('work-orders.completed');
-            Route::get('/notes', function () { return view('maintenance.history'); })->name('notes');
-            Route::get('/profile', function () { return view('resident.profile'); })->name('profile');
+            Route::get('/', [MaintenancePortalController::class, 'dashboard'])->name('dashboard');
+            Route::get('/dashboard', [MaintenancePortalController::class, 'dashboard']);
+            Route::get('/work-orders', [MaintenancePortalController::class, 'workOrders'])->name('work-orders');
+            Route::get('/work-orders/in-progress', [MaintenancePortalController::class, 'inProgress'])->name('work-orders.in-progress');
+            Route::get('/work-orders/completed', [MaintenancePortalController::class, 'completed'])->name('work-orders.completed');
+            Route::get('/notes', [MaintenancePortalController::class, 'history'])->name('notes');
+            Route::get('/profile', [MaintenancePortalController::class, 'profile'])->name('profile');
+            Route::put('/profile', [MaintenancePortalController::class, 'updateProfile'])->name('profile.update');
+            Route::put('/profile/password', [MaintenancePortalController::class, 'updatePassword'])->name('profile.password.update');
             
-            Route::get('/orders/{id}', function () { return view('maintenance.show'); })->name('show');
-            Route::get('/orders/{id}/update', function () { return view('maintenance.update'); })->name('update');
-            Route::get('/history', function () { return view('maintenance.history'); })->name('history');
+            Route::get('/orders/{order}', [MaintenancePortalController::class, 'show'])->name('show');
+            Route::get('/orders/{order}/update', [MaintenancePortalController::class, 'edit'])->name('update');
+            Route::post('/orders/{order}/update', [MaintenancePortalController::class, 'update'])->name('orders.update');
+            Route::get('/history', [MaintenancePortalController::class, 'history'])->name('history');
         });
 
     Route::prefix('manager')

@@ -23,6 +23,7 @@ use App\Models\VehicleRegistration;
 use App\Models\VisitorLog;
 use App\Models\VisitorRequest;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderNote;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -175,7 +176,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        WorkOrder::updateOrCreate(
+        $workOrder = WorkOrder::updateOrCreate(
             ['complaint_id' => $complaint->id, 'title' => 'Inspect kitchen sink leakage'],
             [
                 'assigned_to' => $maintenance->id,
@@ -184,6 +185,15 @@ class DatabaseSeeder extends Seeder
                 'priority' => 'high',
                 'status' => 'todo',
                 'due_at' => now()->addDay(),
+            ]
+        );
+
+        WorkOrderNote::updateOrCreate(
+            ['work_order_id' => $workOrder->id, 'user_id' => $maintenance->id, 'status' => 'in_progress'],
+            [
+                'remarks' => 'Initial inspection scheduled with resident. Replacement seal kit prepared.',
+                'proof_path' => null,
+                'noted_at' => now()->subHours(2),
             ]
         );
 
