@@ -107,9 +107,22 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::post('/incidents', [SecurityPortalController::class, 'storeIncident'])->name('incidents.store');
         });
 
-    Route::get('/maintenance/dashboard', [DashboardController::class, 'maintenance'])
+    Route::prefix('maintenance')
+        ->name('maintenance.')
         ->middleware('role:staff')
-        ->name('maintenance.dashboard');
+        ->group(function () {
+            Route::get('/', [DashboardController::class, 'maintenance'])->name('dashboard');
+            Route::get('/dashboard', [DashboardController::class, 'maintenance']);
+            Route::get('/work-orders', function () { return view('maintenance.dashboard'); })->name('work-orders');
+            Route::get('/work-orders/in-progress', function () { return view('maintenance.dashboard'); })->name('work-orders.in-progress');
+            Route::get('/work-orders/completed', function () { return view('maintenance.history'); })->name('work-orders.completed');
+            Route::get('/notes', function () { return view('maintenance.history'); })->name('notes');
+            Route::get('/profile', function () { return view('resident.profile'); })->name('profile');
+            
+            Route::get('/orders/{id}', function () { return view('maintenance.show'); })->name('show');
+            Route::get('/orders/{id}/update', function () { return view('maintenance.update'); })->name('update');
+            Route::get('/history', function () { return view('maintenance.history'); })->name('history');
+        });
 
     Route::prefix('manager')
         ->name('manager.')

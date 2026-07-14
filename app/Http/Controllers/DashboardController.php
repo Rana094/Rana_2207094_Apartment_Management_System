@@ -35,10 +35,6 @@ class DashboardController extends Controller
 
     public function maintenance(Request $request): View
     {
-        return view('dashboards.placeholder', [
-            'title' => 'Maintenance Staff Dashboard',
-            'message' => 'Maintenance backend access is ready.',
-            'user' => $request->user(),
-        ]);
+        return view('maintenance.dashboard');
     }
 }
