@@ -6,6 +6,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\Maintenance\MaintenancePortalController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Resident\ResidentPortalController;
 use App\Http\Controllers\Security\SecurityPortalController;
 use Illuminate\Support\Facades\Route;
@@ -52,6 +53,10 @@ Route::middleware('auth')->group(function () {
 
 // Authenticated Portal Entry Routes
 Route::middleware(['auth', 'approved'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+
     Route::get('/resident/dashboard', [DashboardController::class, 'resident'])
         ->middleware('role:resident')
         ->name('resident.dashboard');

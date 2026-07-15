@@ -23,6 +23,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use App\Services\NotificationService;
 
 class ResidentPortalController extends Controller
 {
@@ -108,6 +109,14 @@ class ResidentPortalController extends Controller
 
         $bill->update(['status' => 'pending_verification']);
 
+        app(NotificationService::class)->toRole(
+            'manager',
+            'payment_proof_uploaded',
+            'Payment proof uploaded',
+            $request->user()->name.' uploaded proof for bill '.$bill->bill_number.'.',
+            route('manager.payments.index', absolute: false)
+        );
+
         return redirect()->route('resident.bills.show', $bill)->with('status', 'Payment proof uploaded for manager verification.');
     }
 
@@ -148,6 +157,14 @@ class ResidentPortalController extends Controller
             'priority' => $validated['priority'],
             'status' => 'open',
         ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'complaint_created',
+            'New maintenance complaint',
+            $request->user()->name.' submitted: '.$complaint->title,
+            route('manager.complaints.index', absolute: false)
+        );
 
         return redirect()->route('resident.complaints.show', $complaint)->with('status', 'Complaint submitted successfully.');
     }
@@ -197,12 +214,20 @@ class ResidentPortalController extends Controller
             'expected_entry_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        VisitorRequest::create($validated + [
+        $visitor = VisitorRequest::create($validated + [
             'resident_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
             'access_code' => strtoupper(Str::random(8)),
             'status' => 'pending',
         ]);
+
+        app(NotificationService::class)->toRole(
+            'security',
+            'visitor_request_created',
+            'New visitor request',
+            $request->user()->name.' requested visitor access for '.$visitor->visitor_name.'.',
+            route('security.checkin', absolute: false)
+        );
 
         return redirect()->route('resident.visitors.index')->with('status', 'Visitor request created.');
     }
@@ -261,10 +286,18 @@ class ResidentPortalController extends Controller
             'purpose' => ['nullable', 'string', 'max:255'],
         ]);
 
-        FacilityBooking::create($validated + [
+        $booking = FacilityBooking::create($validated + [
             'resident_id' => $request->user()->id,
             'status' => 'pending',
         ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'facility_booking_requested',
+            'Facility booking requested',
+            $request->user()->name.' requested a facility booking.',
+            route('manager.bookings.index', absolute: false)
+        );
 
         return redirect()->route('resident.bookings.index')->with('status', 'Facility booking request submitted.');
     }
@@ -307,12 +340,22 @@ class ResidentPortalController extends Controller
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        EmergencyRequest::create(array_merge($validated, [
+        $emergency = EmergencyRequest::create(array_merge($validated, [
             'resident_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
             'type' => $validated['type'] === 'leak' ? 'maintenance' : $validated['type'],
             'status' => 'open',
         ]));
+
+        foreach (['manager', 'security'] as $role) {
+            app(NotificationService::class)->toRole(
+                $role,
+                'emergency_request_created',
+                'Emergency request created',
+                $request->user()->name.' triggered a '.$emergency->type.' emergency.',
+                $role === 'manager' ? route('manager.emergencies.index', absolute: false) : route('security.emergency', absolute: false)
+            );
+        }
 
         return redirect()->route('resident.emergency')->with('status', 'Emergency request sent.');
     }
@@ -346,7 +389,7 @@ class ResidentPortalController extends Controller
 
         $file = $request->file('document') ?? $request->file('document_file');
 
-        Document::create([
+        $document = Document::create([
             'user_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
             'title' => $validated['title'],
@@ -356,6 +399,14 @@ class ResidentPortalController extends Controller
             'file_size' => $file->getSize(),
             'status' => 'pending_verification',
         ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'document_uploaded',
+            'Resident document uploaded',
+            $request->user()->name.' uploaded '.$document->title.' for verification.',
+            route('manager.residents.index', absolute: false)
+        );
 
         return redirect()->route('resident.documents')->with('status', 'Document uploaded for verification.');
     }
@@ -391,6 +442,14 @@ class ResidentPortalController extends Controller
             'flat_id' => $this->residentProfile($request)?->flat_id,
             'status' => 'pending',
         ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'move_out_requested',
+            'Move-out request submitted',
+            $request->user()->name.' submitted a move-out request.',
+            route('manager.residents.index', absolute: false)
+        );
 
         return redirect()->route('resident.move-out')->with('status', 'Move-out request submitted.');
     }

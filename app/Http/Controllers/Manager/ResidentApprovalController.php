@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Services\NotificationService;
 
 class ResidentApprovalController extends Controller
 {
@@ -32,6 +33,14 @@ class ResidentApprovalController extends Controller
             'rejection_reason' => null,
         ])->save();
 
+        app(NotificationService::class)->toUser(
+            $resident->id,
+            'resident_approved',
+            'Account approved',
+            'Your resident account has been approved. You can now access your portal.',
+            route('resident.dashboard', absolute: false)
+        );
+
         return back()->with('status', "{$resident->name} has been approved.");
     }
 
@@ -49,6 +58,14 @@ class ResidentApprovalController extends Controller
             'approved_by' => $request->user()->id,
             'rejection_reason' => $validated['rejection_reason'] ?? null,
         ])->save();
+
+        app(NotificationService::class)->toUser(
+            $resident->id,
+            'resident_rejected',
+            'Account rejected',
+            $validated['rejection_reason'] ?? 'Your resident registration was rejected by management.',
+            route('approval.pending', absolute: false)
+        );
 
         return back()->with('status', "{$resident->name} has been rejected.");
     }

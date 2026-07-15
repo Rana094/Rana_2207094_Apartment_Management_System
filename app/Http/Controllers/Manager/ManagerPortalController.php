@@ -10,7 +10,6 @@ use App\Models\EmergencyRequest;
 use App\Models\FacilityBooking;
 use App\Models\Flat;
 use App\Models\Notice;
-use App\Models\Notification;
 use App\Models\PaymentProof;
 use App\Models\Poll;
 use App\Models\PollOption;
@@ -25,6 +24,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use App\Services\NotificationService;
 
 class ManagerPortalController extends Controller
 {
@@ -305,6 +305,14 @@ class ManagerPortalController extends Controller
             'status' => 'active',
         ]);
 
+        app(NotificationService::class)->toUser(
+            $user->id,
+            'staff_account_created',
+            'Staff account created',
+            'Your Nestora staff account is ready.',
+            route($user->role === 'security' ? 'security.dashboard' : 'maintenance.dashboard', absolute: false)
+        );
+
         return redirect()->route('manager.staff')->with('status', 'Staff member created.');
     }
 
@@ -354,6 +362,14 @@ class ManagerPortalController extends Controller
             PollOption::create(['poll_id' => $poll->id, 'label' => $label]);
         }
 
+        app(NotificationService::class)->toRole(
+            'resident',
+            'poll_created',
+            'New poll available',
+            $poll->title,
+            route('resident.polls', absolute: false)
+        );
+
         return redirect()->route('manager.polls')->with('status', 'Poll created.');
     }
 
@@ -400,13 +416,12 @@ class ManagerPortalController extends Controller
             'published_at' => now(),
         ]);
 
-        Notification::create([
-            'audience' => $notice->audience,
-            'type' => 'notice',
-            'title' => $notice->title,
-            'body' => $notice->body,
-            'action_url' => route('manager.notices.index', absolute: false),
-        ]);
+        app(NotificationService::class)->toAll(
+            'notice',
+            $notice->title,
+            $notice->body,
+            route('notifications.index', absolute: false)
+        );
 
         return redirect()->route('manager.notices.index')->with('status', 'Notice published.');
     }
@@ -435,12 +450,6 @@ class ManagerPortalController extends Controller
 
     private function notify(?int $userId, string $type, string $title, ?string $body = null): void
     {
-        Notification::create([
-            'user_id' => $userId,
-            'audience' => $userId ? 'user' : 'all',
-            'type' => $type,
-            'title' => $title,
-            'body' => $body,
-        ]);
+        app(NotificationService::class)->toUser($userId, $type, $title, $body);
     }
 }
