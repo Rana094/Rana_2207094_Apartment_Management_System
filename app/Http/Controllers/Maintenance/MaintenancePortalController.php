@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 use App\Services\NotificationService;
+use App\Services\FileUploadService;
 
 class MaintenancePortalController extends Controller
 {
@@ -86,8 +87,8 @@ class MaintenancePortalController extends Controller
         $validated = $request->validate([
             'status' => ['required', 'string'],
             'remarks' => ['required', 'string', 'max:5000'],
-            'completion_photo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-            'completion_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'completion_photo' => ['nullable', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
+            'completion_proof' => ['nullable', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
         ]);
 
         $status = $statusMap[$validated['status']] ?? $validated['status'];
@@ -100,7 +101,7 @@ class MaintenancePortalController extends Controller
             'user_id' => $request->user()->id,
             'status' => $status,
             'remarks' => $validated['remarks'],
-            'proof_path' => $proof?->store('work-order-proofs'),
+            'proof_path' => $proof ? app(FileUploadService::class)->store($proof, 'work-order-proofs') : null,
             'noted_at' => now(),
         ]);
 

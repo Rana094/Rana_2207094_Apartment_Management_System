@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use App\Services\FileUploadService;
 
 class AuthController extends Controller
 {
@@ -61,11 +62,11 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::min(8)],
             'resident_type' => ['required', Rule::in(['owner', 'tenant'])],
             'flat_info' => ['required', 'string', 'max:255'],
-            'nid_document' => ['nullable', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120'],
+            'nid_document' => ['nullable', 'file', 'mimes:'.FileUploadService::DOCUMENT_MIMES, 'max:'.FileUploadService::MAX_DOCUMENT_KB],
         ]);
 
         $documentPath = $request->hasFile('nid_document')
-            ? $request->file('nid_document')->store('resident-documents')
+            ? app(FileUploadService::class)->store($request->file('nid_document'), 'resident-documents')
             : null;
 
         $user = User::create([

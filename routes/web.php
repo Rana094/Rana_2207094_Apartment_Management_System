@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
+use App\Http\Controllers\FileAccessController;
 use App\Http\Controllers\Maintenance\MaintenancePortalController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
@@ -56,6 +57,10 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/files/documents/{document}', [FileAccessController::class, 'document'])->name('files.documents.show');
+    Route::get('/files/resident-signup/{resident}', [FileAccessController::class, 'residentSignupDocument'])->name('files.resident-signup.show');
+    Route::get('/files/payment-proofs/{paymentProof}', [FileAccessController::class, 'paymentProof'])->name('files.payment-proofs.show');
+    Route::get('/files/work-order-proofs/{note}', [FileAccessController::class, 'workOrderProof'])->name('files.work-order-proofs.show');
 
     Route::get('/resident/dashboard', [DashboardController::class, 'resident'])
         ->middleware('role:resident')
