@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Security;
 use App\Http\Controllers\Controller;
 use App\Models\EmergencyRequest;
 use App\Models\Flat;
-use App\Models\Notification;
 use App\Models\ResidentProfile;
 use App\Models\SecurityIncident;
 use App\Models\User;
@@ -15,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use App\Services\NotificationService;
 
 class SecurityPortalController extends Controller
 {
@@ -157,13 +157,13 @@ class SecurityPortalController extends Controller
             'status' => 'open',
         ]);
 
-        Notification::create([
-            'audience' => 'manager',
-            'type' => 'security_emergency',
-            'title' => 'Security emergency triggered',
-            'body' => $validated['message'] ?? null,
-            'action_url' => route('manager.emergencies.index', absolute: false),
-        ]);
+        app(NotificationService::class)->toRole(
+            'manager',
+            'security_emergency',
+            'Security emergency triggered',
+            $validated['message'] ?? null,
+            route('manager.emergencies.index', absolute: false)
+        );
 
         return redirect()->route('security.emergency')->with('status', 'Emergency alert dispatched.');
     }
@@ -197,13 +197,13 @@ class SecurityPortalController extends Controller
             'occurred_at' => $validated['date'].' '.$validated['time'],
         ]);
 
-        Notification::create([
-            'audience' => 'manager',
-            'type' => 'security_incident',
-            'title' => $validated['subject'],
-            'body' => $validated['description'],
-            'action_url' => route('security.incidents', absolute: false),
-        ]);
+        app(NotificationService::class)->toRole(
+            'manager',
+            'security_incident',
+            $validated['subject'],
+            $validated['description'],
+            route('manager.emergencies.index', absolute: false)
+        );
 
         return redirect()->route('security.incidents')->with('status', 'Security incident report filed.');
     }

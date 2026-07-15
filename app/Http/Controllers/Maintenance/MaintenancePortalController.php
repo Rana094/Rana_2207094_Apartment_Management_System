@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderNote;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use App\Services\NotificationService;
 
 class MaintenancePortalController extends Controller
 {
@@ -114,23 +114,23 @@ class MaintenancePortalController extends Controller
                 'status' => $status === 'completed' ? 'resolved' : 'in_progress',
             ]);
 
-            Notification::create([
-                'user_id' => $order->complaint->resident_id,
-                'audience' => 'user',
-                'type' => 'work_order_'.$status,
-                'title' => 'Maintenance task updated',
-                'body' => $order->title.' is now '.$status.'.',
-            ]);
+            app(NotificationService::class)->toUser(
+                $order->complaint->resident_id,
+                'work_order_'.$status,
+                'Maintenance task updated',
+                $order->title.' is now '.$status.'.',
+                route('resident.complaints.show', $order->complaint, absolute: false)
+            );
         }
 
         if ($order->assigned_by) {
-            Notification::create([
-                'user_id' => $order->assigned_by,
-                'audience' => 'user',
-                'type' => 'work_order_'.$status,
-                'title' => 'Work order updated',
-                'body' => $order->title.' was updated by maintenance staff.',
-            ]);
+            app(NotificationService::class)->toUser(
+                $order->assigned_by,
+                'work_order_'.$status,
+                'Work order updated',
+                $order->title.' was updated by maintenance staff.',
+                route('manager.complaints.index', absolute: false)
+            );
         }
 
         return redirect()->route('maintenance.show', $order)->with('status', 'Work order updated.');
