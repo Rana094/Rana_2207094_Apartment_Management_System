@@ -35,4 +35,9 @@ class PaymentProof extends Model
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
+
+    public function secureUrl(): string
+    {
+        return route('files.payment-proofs.show', $this);
+    }
 }

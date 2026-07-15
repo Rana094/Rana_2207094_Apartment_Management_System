@@ -24,6 +24,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 use App\Services\NotificationService;
+use App\Services\FileUploadService;
 
 class ResidentPortalController extends Controller
 {
@@ -91,11 +92,14 @@ class ResidentPortalController extends Controller
         $validated = $request->validate([
             'amount' => ['nullable', 'numeric', 'min:0'],
             'transaction_reference' => ['nullable', 'string', 'max:255'],
-            'payment_proof' => ['required_without:receipt_file', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120'],
-            'receipt_file' => ['required_without:payment_proof', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120'],
+            'payment_proof' => ['required_without:receipt_file', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
+            'receipt_file' => ['required_without:payment_proof', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
         ]);
 
-        $path = ($request->file('payment_proof') ?? $request->file('receipt_file'))->store('payment-proofs');
+        $path = app(FileUploadService::class)->store(
+            $request->file('payment_proof') ?? $request->file('receipt_file'),
+            'payment-proofs'
+        );
 
         PaymentProof::create([
             'bill_id' => $bill->id,
@@ -383,8 +387,8 @@ class ResidentPortalController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::in(['national_id', 'lease_agreement', 'ownership_proof', 'payment_proof', 'other'])],
-            'document' => ['required_without:document_file', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120'],
-            'document_file' => ['required_without:document', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:5120'],
+            'document' => ['required_without:document_file', 'file', 'mimes:'.FileUploadService::DOCUMENT_MIMES, 'max:'.FileUploadService::MAX_DOCUMENT_KB],
+            'document_file' => ['required_without:document', 'file', 'mimes:'.FileUploadService::DOCUMENT_MIMES, 'max:'.FileUploadService::MAX_DOCUMENT_KB],
         ]);
 
         $file = $request->file('document') ?? $request->file('document_file');
@@ -394,7 +398,7 @@ class ResidentPortalController extends Controller
             'flat_id' => $this->residentProfile($request)?->flat_id,
             'title' => $validated['title'],
             'type' => $validated['type'],
-            'file_path' => $file->store('resident-documents'),
+            'file_path' => app(FileUploadService::class)->store($file, 'resident-documents'),
             'mime_type' => $file->getMimeType(),
             'file_size' => $file->getSize(),
             'status' => 'pending_verification',

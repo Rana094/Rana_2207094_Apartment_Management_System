@@ -28,4 +28,9 @@ class WorkOrderNote extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function secureProofUrl(): ?string
+    {
+        return $this->proof_path ? route('files.work-order-proofs.show', $this) : null;
+    }
 }

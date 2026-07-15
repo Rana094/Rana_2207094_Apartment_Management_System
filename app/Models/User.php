@@ -150,6 +150,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(SecurityIncident::class, 'reported_by');
     }
 
+    public function signupDocumentUrl(): ?string
+    {
+        return $this->document_path ? route('files.resident-signup.show', $this) : null;
+    }
+
     public function assignedWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_to');
