@@ -10,10 +10,32 @@
     </div>
     
     <!-- Emergency Panic dispatch button -->
-    <a href="{{ url('/security/emergency') }}" class="btn btn-danger" style="background-color: var(--color-emergency); font-size: 0.9rem; animation: pulse 2s infinite; border: 1px solid #fda4af;">
-        🚨 Sound Gate Alarm
+    <a href="{{ route('security.emergency') }}" class="btn btn-danger" style="background-color: var(--color-emergency); font-size: 0.9rem; animation: pulse 2s infinite; border: 1px solid #fda4af;">
+        <x-icon name="alarm" alt="" size="1.25rem" class="app-icon-on-danger" />
+        Sound Gate Alarm
     </a>
 </div>
+
+@if ($emergencies->isNotEmpty())
+    <div class="card" style="margin-bottom: 2rem; border: 2px solid #fda4af;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <h3 style="color: var(--color-emergency);">Active Resident Emergencies</h3>
+            <a href="{{ route('security.emergency') }}" class="btn btn-danger btn-sm">Open Emergency Panel</a>
+        </div>
+
+        @foreach ($emergencies as $emergency)
+            <div style="display: flex; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-top: 1px solid var(--border-color);">
+                <div>
+                    <strong>#AL-{{ $emergency->id }} {{ ucfirst($emergency->type) }}</strong>
+                    <div class="text-muted text-xs">
+                        {{ $emergency->resident?->name }} - Flat {{ $emergency->flat?->flat_number ?? 'unassigned' }}
+                    </div>
+                </div>
+                <span class="badge badge-emergency">{{ str_replace('_', ' ', $emergency->status) }}</span>
+            </div>
+        @endforeach
+    </div>
+@endif
 
 <!-- Giant Pre-Approved Code Search Widget -->
 <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(79, 70, 229, 0.02) 0%, rgba(255, 255, 255, 0) 100%); border: 1px solid rgba(79, 70, 229, 0.15); padding: 2rem;">
@@ -116,7 +138,7 @@
                             Farhan Alvi
                             <div style="font-size: 0.75rem; color: var(--text-muted);">Pass: N-5509 | Dhaka Metro-Ha-1234</div>
                         </td>
-                        <td style="font-weight: 700;">Flat 3B (John Doe)</td>
+                        <td style="font-weight: 700;">Flat 3B (ullas)</td>
                         <td>Today, 10:12 AM</td>
                         <td><span class="badge badge-unpaid" style="background-color: var(--secondary-light); color: var(--secondary-color);">Delivery</span></td>
                         <td style="text-align: right;">

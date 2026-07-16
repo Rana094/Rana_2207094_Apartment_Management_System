@@ -97,6 +97,109 @@ img, svg {
     height: auto;
 }
 
+.app-icon {
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.db-menu-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.app-icon-emergency {
+    filter: saturate(1.1);
+}
+
+.app-icon-on-danger {
+    filter: brightness(0) invert(1);
+}
+
+/* Asset-backed icons. Sidebar/topbar icons are mapped to files in public/icons. */
+.db-menu-link > svg,
+.db-menu-link > .app-icon {
+    display: none;
+}
+
+.db-menu-link::before,
+.db-sidebar-logo::before,
+.logo::before,
+.db-sidebar-toggle::before,
+.mobile-toggle::before,
+button[title="Sign Out"]::before,
+#profile-dropdown-btn::after,
+.alert-success::before,
+.alert-danger::before,
+.stat-icon::before {
+    content: "";
+    display: inline-block;
+    width: 1.25rem;
+    height: 1.25rem;
+    --icon-url: url("/icons/dashboard.png");
+    background-image: url("/icons/dashboard.png");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex-shrink: 0;
+}
+
+.db-sidebar-logo .logo-icon,
+.logo .logo-icon,
+.db-sidebar-toggle svg,
+.mobile-toggle svg,
+button[title="Sign Out"] svg,
+#profile-dropdown-btn > svg,
+.alert-success > svg,
+.alert-danger > svg,
+.stat-icon > svg {
+    display: none;
+}
+
+.db-sidebar-logo::before,
+.logo::before { background-image: url("/icons/house.png"); }
+.db-sidebar-toggle::before { width: 1.5rem; height: 1.5rem; background-image: url("/icons/menu.png"); }
+.mobile-toggle::before { width: 1.75rem; height: 1.75rem; background-image: url("/icons/menu.png"); }
+button[title="Sign Out"]::before { background-image: url("/icons/arrows.png"); }
+#profile-dropdown-btn::after { width: 1rem; height: 1rem; background-image: url("/icons/arrows.png"); }
+#profile-dropdown-btn::after { display: none; }
+.alert-success::before { background-image: url("/icons/success.png"); }
+.alert-danger::before { background-image: url("/icons/warning.png"); }
+.stat-icon::before { width: 1.5rem; height: 1.5rem; background-image: url("/icons/dashboard.png"); }
+.stat-icon.primary::before { background-image: url("/icons/building.png"); }
+.stat-icon.secondary::before { background-image: url("/icons/resident.png"); }
+.stat-icon.warning::before { background-image: url("/icons/warning.png"); }
+.stat-icon.danger::before { background-image: url("/icons/alarm.png"); }
+
+.db-menu-link[href*="dashboard"]::before { --icon-url: url("/icons/dashboard.png"); background-image: url("/icons/dashboard.png"); }
+.db-menu-link[href*="/flat"]::before,
+.db-menu-link[href*="/flats"]::before { --icon-url: url("/icons/building.png"); background-image: url("/icons/building.png"); }
+.db-menu-link[href*="/bills"]::before { --icon-url: url("/icons/bill.png"); background-image: url("/icons/bill.png"); }
+.db-menu-link[href*="/payments"]::before { --icon-url: url("/icons/payment-method.png"); background-image: url("/icons/payment-method.png"); }
+.db-menu-link[href*="/reports"]::before { --icon-url: url("/icons/payment-method.png"); background-image: url("/icons/payment-method.png"); }
+.db-menu-link[href*="/complaints"]::before { --icon-url: url("/icons/complaint.png"); background-image: url("/icons/complaint.png"); }
+.db-menu-link[href*="/visitors"]::before { --icon-url: url("/icons/visitor.png"); background-image: url("/icons/visitor.png"); }
+.db-menu-link[href*="/bookings"]::before { --icon-url: url("/icons/booking.png"); background-image: url("/icons/booking.png"); }
+.db-menu-link[href*="/emergency"]::before,
+.db-menu-link[href*="/emergencies"]::before { --icon-url: url("/icons/alarm.png"); background-image: url("/icons/alarm.png"); }
+.db-menu-link[href*="/documents"]::before { --icon-url: url("/icons/document.png"); background-image: url("/icons/document.png"); }
+.db-menu-link[href*="/move-out"]::before { --icon-url: url("/icons/left.png"); background-image: url("/icons/left.png"); }
+.db-menu-link[href*="/profile"]::before { --icon-url: url("/icons/profile.png"); background-image: url("/icons/profile.png"); }
+.db-menu-link[href*="/resident-approvals"]::before { --icon-url: url("/icons/approved.png"); background-image: url("/icons/approved.png"); }
+.db-menu-link[href*="/residents"]::before { --icon-url: url("/icons/resident.png"); background-image: url("/icons/resident.png"); }
+.db-menu-link[href*="/staff"]::before { --icon-url: url("/icons/teamwork.png"); background-image: url("/icons/teamwork.png"); }
+.db-menu-link[href*="/notices"]::before { --icon-url: url("/icons/notification.png"); background-image: url("/icons/notification.png"); }
+.db-menu-link[href*="/checkin"]::before { --icon-url: url("/icons/check-in.png"); background-image: url("/icons/check-in.png"); }
+.db-menu-link[href*="/checkout"]::before { --icon-url: url("/icons/check-in.png"); background-image: url("/icons/check-in.png"); transform: scaleX(-1); }
+.db-menu-link[href*="/logs"]::before { --icon-url: url("/icons/document.png"); background-image: url("/icons/document.png"); }
+.db-menu-link[href*="/incidents"]::before { --icon-url: url("/icons/warning-sign.png"); background-image: url("/icons/warning-sign.png"); }
+.db-menu-link[href*="/work-orders"]::before { --icon-url: url("/icons/work-in-progress.png"); background-image: url("/icons/work-in-progress.png"); }
+.db-menu-link[href*="/in-progress"]::before { --icon-url: url("/icons/work-in-progress.png"); background-image: url("/icons/work-in-progress.png"); }
+.db-menu-link[href*="/completed"]::before { --icon-url: url("/icons/approved.png"); background-image: url("/icons/approved.png"); }
+.db-menu-link[href*="/notes"]::before { --icon-url: url("/icons/document.png"); background-image: url("/icons/document.png"); }
+
 /* 3. LAYOUT UTILITIES */
 .container {
     width: 100%;
@@ -589,6 +692,28 @@ p.lead {
     height: 1.25rem;
     flex-shrink: 0;
 }
+.db-sidebar .db-menu-link::before {
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    border-radius: 0;
+    background-color: #94a3b8;
+    background-image: none;
+    box-shadow: none;
+    -webkit-mask-image: var(--icon-url);
+    mask-image: var(--icon-url);
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
+.db-sidebar .db-menu-link:hover::before,
+.db-sidebar .db-menu-link.active::before {
+    background-color: #ffffff;
+    box-shadow: none;
+}
 .db-menu-link:hover, .db-menu-link.active {
     background-color: #1e293b;
     color: #ffffff;
@@ -678,6 +803,31 @@ p.lead {
 .dropdown-trigger:hover {
     background-color: #f1f5f9;
     color: var(--text-primary);
+}
+.profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.55rem;
+    border-radius: var(--radius-md);
+}
+.profile-trigger .profile-trigger-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+.money {
+    display: inline-flex;
+    align-items: center;
+    justify-content: inherit;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+.taka-icon {
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    object-fit: contain;
+    flex-shrink: 0;
 }
 .badge-dot {
     position: absolute;

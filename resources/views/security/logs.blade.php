@@ -50,7 +50,7 @@
                     Farhan Alvi
                     <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">+880 1812 998877</div>
                 </td>
-                <td style="font-weight: 600;">Flat 3B — John Doe</td>
+                <td style="font-weight: 600;">Flat 3B — ullas</td>
                 <td>Delivery (Foodpanda)</td>
                 <td><code style="background-color: var(--bg-main); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">N-5509</code></td>
                 <td>
@@ -66,7 +66,7 @@
                     Ahmad Sufian
                     <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">+880 1723 445566</div>
                 </td>
-                <td style="font-weight: 600;">Flat 3B — John Doe</td>
+                <td style="font-weight: 600;">Flat 3B — ullas</td>
                 <td>Guest (Relative)</td>
                 <td><code style="background-color: var(--bg-main); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">N-2311</code></td>
                 <td>

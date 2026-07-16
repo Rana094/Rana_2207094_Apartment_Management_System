@@ -16,9 +16,8 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem;">New Ticket Form</h3>
         
-        <form action="{{ url('/resident/complaints') }}" method="GET" enctype="multipart/form-data">
-            <!-- Hidden session flag to display success message -->
-            <input type="hidden" name="complaint_filed" value="1">
+        <form action="{{ route('resident.complaints.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
             
             <!-- Subject -->
             <div class="form-group">

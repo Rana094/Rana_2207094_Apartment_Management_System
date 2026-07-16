@@ -10,6 +10,9 @@ use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Resident\ResidentPortalController;
 use App\Http\Controllers\Security\SecurityPortalController;
+use App\Models\ContactMessage;
+use App\Services\NotificationService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public Front-Facing Routes
@@ -23,20 +26,45 @@ Route::get('/about', function () {
 
 Route::get('/contact', function () {
     return view('contact');
-});
+})->name('contact');
+
+Route::post('/contact', function (Request $request) {
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'max:255'],
+        'phone' => ['nullable', 'string', 'max:30'],
+        'subject' => ['required', 'string', 'max:255'],
+        'message' => ['required', 'string', 'max:5000'],
+    ]);
+
+    $message = ContactMessage::create($validated);
+
+    app(NotificationService::class)->toRole(
+        'manager',
+        'contact_message_created',
+        'New public contact message',
+        $message->name.' sent: '.$message->subject,
+        route('manager.dashboard', absolute: false)
+    );
+
+    return redirect()->route('contact')->with('success', 'Message sent successfully. Our team will contact you shortly.');
+})->name('contact.store');
 
 Route::get('/dashboard-preview', function () {
     $role = request('role', 'resident');
+
     return view('dashboard-preview', compact('role'));
 });
 
 Route::get('/waiting-approval', [EmailVerificationController::class, 'notice'])->name('approval.pending');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:6,1')
+    ->name('login.store');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 });
 
@@ -71,6 +99,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->middleware('role:resident')
         ->group(function () {
             Route::get('/flat', [ResidentPortalController::class, 'flat'])->name('flat');
+            Route::post('/vehicles', [ResidentPortalController::class, 'storeVehicle'])->name('vehicles.store');
             Route::get('/bills', [ResidentPortalController::class, 'bills'])->name('bills.index');
             Route::get('/bills/{bill}', [ResidentPortalController::class, 'bill'])->name('bills.show');
             Route::get('/bills/{bill}/upload', [ResidentPortalController::class, 'uploadPaymentProof'])->name('bills.upload');
@@ -79,14 +108,14 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::get('/complaints/create', [ResidentPortalController::class, 'createComplaint'])->name('complaints.create');
             Route::post('/complaints', [ResidentPortalController::class, 'storeComplaint'])->name('complaints.store');
             Route::get('/complaints/{complaint}', [ResidentPortalController::class, 'complaint'])->name('complaints.show');
+            Route::post('/complaints/{complaint}/messages', [ResidentPortalController::class, 'storeComplaintMessage'])->name('complaints.messages.store');
             Route::get('/visitors', [ResidentPortalController::class, 'visitors'])->name('visitors.index');
             Route::get('/visitors/create', [ResidentPortalController::class, 'createVisitor'])->name('visitors.create');
             Route::post('/visitors', [ResidentPortalController::class, 'storeVisitor'])->name('visitors.store');
+            Route::post('/visitors/{visitor}/cancel', [ResidentPortalController::class, 'cancelVisitor'])->name('visitors.cancel');
             Route::get('/bookings', [ResidentPortalController::class, 'bookings'])->name('bookings.index');
             Route::get('/bookings/create', [ResidentPortalController::class, 'createBooking'])->name('bookings.create');
             Route::post('/bookings', [ResidentPortalController::class, 'storeBooking'])->name('bookings.store');
-            Route::get('/polls', [ResidentPortalController::class, 'polls'])->name('polls');
-            Route::post('/polls/{poll}/vote', [ResidentPortalController::class, 'vote'])->name('polls.vote');
             Route::get('/emergency', [ResidentPortalController::class, 'emergency'])->name('emergency');
             Route::post('/emergency', [ResidentPortalController::class, 'storeEmergency'])->name('emergency.store');
             Route::get('/documents', [ResidentPortalController::class, 'documents'])->name('documents');
@@ -114,6 +143,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::get('/logs', [SecurityPortalController::class, 'logs'])->name('logs');
             Route::get('/emergency', [SecurityPortalController::class, 'emergency'])->name('emergency');
             Route::post('/emergency', [SecurityPortalController::class, 'triggerEmergency'])->name('emergency.store');
+            Route::post('/emergency/{emergency}/status', [SecurityPortalController::class, 'updateEmergency'])->name('emergency.status');
             Route::get('/incidents', [SecurityPortalController::class, 'incidents'])->name('incidents');
             Route::post('/incidents', [SecurityPortalController::class, 'storeIncident'])->name('incidents.store');
         });
@@ -131,7 +161,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::get('/profile', [MaintenancePortalController::class, 'profile'])->name('profile');
             Route::put('/profile', [MaintenancePortalController::class, 'updateProfile'])->name('profile.update');
             Route::put('/profile/password', [MaintenancePortalController::class, 'updatePassword'])->name('profile.password.update');
-            
+
             Route::get('/orders/{order}', [MaintenancePortalController::class, 'show'])->name('show');
             Route::get('/orders/{order}/update', [MaintenancePortalController::class, 'edit'])->name('update');
             Route::post('/orders/{order}/update', [MaintenancePortalController::class, 'update'])->name('orders.update');
@@ -151,6 +181,8 @@ Route::middleware(['auth', 'approved'])->group(function () {
 
             Route::get('/residents', [ManagerPortalController::class, 'residents'])->name('residents.index');
             Route::get('/residents/{resident}', [ManagerPortalController::class, 'resident'])->name('residents.show');
+            Route::post('/residents/{resident}/status', [ManagerPortalController::class, 'updateResidentStatus'])->name('residents.status');
+            Route::get('/documents', [ManagerPortalController::class, 'documents'])->name('documents.index');
             Route::get('/flats', [ManagerPortalController::class, 'flats'])->name('flats.index');
             Route::get('/flats/create', [ManagerPortalController::class, 'createFlat'])->name('flats.create');
             Route::post('/flats', [ManagerPortalController::class, 'storeFlat'])->name('flats.store');
@@ -168,14 +200,13 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::post('/complaints/{complaint}/assign', [ManagerPortalController::class, 'storeWorkOrder'])->name('complaints.work-orders.store');
             Route::get('/staff', [ManagerPortalController::class, 'staff'])->name('staff');
             Route::post('/staff', [ManagerPortalController::class, 'storeStaff'])->name('staff.store');
+            Route::delete('/staff/{staff}', [ManagerPortalController::class, 'destroyStaff'])->name('staff.destroy');
             Route::get('/bookings', [ManagerPortalController::class, 'bookings'])->name('bookings.index');
             Route::post('/bookings/{booking}/status', [ManagerPortalController::class, 'updateBooking'])->name('bookings.status');
-            Route::get('/polls', [ManagerPortalController::class, 'polls'])->name('polls');
-            Route::post('/polls', [ManagerPortalController::class, 'storePoll'])->name('polls.store');
-            Route::get('/polls/create', [ManagerPortalController::class, 'polls'])->name('polls.create');
             Route::get('/emergencies', [ManagerPortalController::class, 'emergencies'])->name('emergencies.index');
             Route::post('/emergencies/{emergency}/status', [ManagerPortalController::class, 'updateEmergency'])->name('emergencies.status');
             Route::get('/notices', [ManagerPortalController::class, 'notices'])->name('notices.index');
             Route::post('/notices', [ManagerPortalController::class, 'storeNotice'])->name('notices.store');
+            Route::delete('/notices/{notice}', [ManagerPortalController::class, 'destroyNotice'])->name('notices.destroy');
         });
 });

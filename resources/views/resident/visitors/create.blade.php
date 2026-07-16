@@ -16,9 +16,8 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem;">New Visitor Pass Details</h3>
         
-        <form action="{{ url('/resident/visitors') }}" method="GET">
-            <!-- Hidden session flag to trigger success badge -->
-            <input type="hidden" name="pass_created" value="1">
+        <form action="{{ route('resident.visitors.store') }}" method="POST">
+            @csrf
             
             <div class="grid grid-2">
                 <!-- Visitor Name -->
@@ -74,7 +73,7 @@
             </div>
 
             <div style="background-color: var(--primary-light); padding: 1.25rem; border-radius: var(--radius-md); border: 1px dashed rgba(79,70,229,0.25); margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
-                <strong>Note:</strong> Generating this pass creates a mock 6-digit gate code (e.g. <code>N-XXXX</code>) which you can share with your guest. Once the security guard registers their entry with this code, you will receive an automatic check-in notification.
+                <strong>Note:</strong> Generating this pass creates a gate access code in the database which you can share with your guest. Once the security guard registers their entry with this code, the visitor log is updated.
             </div>
 
             <div style="display: flex; gap: 1rem;">
