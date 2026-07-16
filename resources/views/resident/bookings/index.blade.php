@@ -1,85 +1,41 @@
 @extends('layouts.dashboard')
 
-@section('title', 'My Facility Bookings — Nestora')
+@section('title', 'My Facility Bookings - Nestora')
 
 @section('content')
 <div class="db-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h1 class="db-title">Facility Bookings</h1>
-        <p class="db-subtitle">Book community facilities (Community Hall, Gym, Pool) and view your active reservation history.</p>
+        <p class="db-subtitle">View your reservation history and submit new facility requests.</p>
     </div>
-    
-    <a href="{{ url('/resident/bookings/create') }}" class="btn btn-primary">Book a Facility</a>
+    <a href="{{ route('resident.bookings.create') }}" class="btn btn-primary">Book a Facility</a>
 </div>
 
-<!-- Bookings List Table -->
-<div class="table-responsive">
-    <div class="table-toolbar">
-        <div class="table-toolbar-left">
-            <select class="form-control form-select" style="max-width: 200px;">
-                <option value="">All Facilities</option>
-                <option value="hall">Community Hall</option>
-                <option value="gym">Fitness Gym</option>
-                <option value="bbq">Rooftop BBQ Area</option>
-            </select>
-            <select class="form-control form-select" style="max-width: 200px;">
-                <option value="">All Statuses</option>
-                <option value="approved">Approved</option>
-                <option value="pending">Pending Approval</option>
-                <option value="rejected">Rejected</option>
-            </select>
-        </div>
-    </div>
+@if (session('status'))
+    <div class="alert alert-success" style="margin-bottom: 1rem;">{{ session('status') }}</div>
+@endif
 
+<div class="table-responsive">
     <table class="db-table">
-        <thead>
-            <tr>
-                <th>Booking ID</th>
-                <th>Selected Facility</th>
-                <th>Reserved Date</th>
-                <th>Time Timings</th>
-                <th>Booking Fee</th>
-                <th>Payment Status</th>
-                <th>Approval Status</th>
-                <th style="text-align: right;">Action</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Booking</th><th>Facility</th><th>Date</th><th>Time</th><th>Fee</th><th>Purpose</th><th>Status</th></tr></thead>
         <tbody>
-            <tr>
-                <td style="font-weight: 700;">#BK-4091</td>
-                <td style="font-weight: 600;">Community Hall (Tower 1)<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Family Birthday Event</div></td>
-                <td>July 12, 2026</td>
-                <td>04:00 PM - 09:00 PM</td>
-                <td style="font-weight: 600;">৳ 5,000</td>
-                <td><span class="badge badge-paid">paid</span></td>
-                <td><span class="badge badge-approved">approved</span></td>
-                <td style="text-align: right;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="alert('Viewing booking receipt voucher...');">Receipt</button>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: 700;">#BK-3870</td>
-                <td style="font-weight: 600;">Rooftop BBQ Grill Station</td>
-                <td>July 09, 2026</td>
-                <td>06:00 PM - 10:00 PM</td>
-                <td style="font-weight: 600;">৳ 1,500</td>
-                <td><span class="badge badge-unpaid">unpaid</span></td>
-                <td><span class="badge badge-pending-verification" style="color: var(--color-pending); background-color: var(--bg-pending);">pending</span></td>
-                <td style="text-align: right;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                        <button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem;" onclick="showConfirmModal('Cancel Booking?', 'Cancel rooftop BBQ booking request #BK-3870? Booking fees will be cleared.', function(){ alert('Booking cancelled.'); }, true)">Cancel</button>
-                    </div>
-                </td>
-            </tr>
+            @forelse ($bookings as $booking)
+                <tr>
+                    <td><strong>#BK-{{ $booking->id }}</strong></td>
+                    <td>{{ $booking->facility?->name ?? 'Unknown facility' }}</td>
+                    <td>{{ $booking->booking_date?->format('M d, Y') }}</td>
+                    <td>{{ \Illuminate\Support\Carbon::parse($booking->start_time)->format('g:i A') }} - {{ \Illuminate\Support\Carbon::parse($booking->end_time)->format('g:i A') }}</td>
+                    <td><span class="money"><x-taka />{{ number_format((float) ($booking->facility?->booking_fee ?? 0), 2) }}</span></td>
+                    <td>{{ $booking->purpose ?: '-' }}</td>
+                    <td><span class="badge badge-{{ $booking->status === 'approved' ? 'approved' : ($booking->status === 'rejected' ? 'rejected' : 'pending-verification') }}">{{ str_replace('_', ' ', ucfirst($booking->status)) }}</span></td>
+                </tr>
+            @empty
+                <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No facility bookings submitted.</td></tr>
+            @endforelse
         </tbody>
     </table>
-    
-    <div class="table-pagination">
-        <div class="pagination-info">Showing <strong>2</strong> reservations</div>
-        <div class="pagination-btns">
-            <button type="button" class="btn btn-outline btn-sm" disabled>Previous</button>
-            <button type="button" class="btn btn-outline btn-sm" disabled>Next</button>
-        </div>
-    </div>
+    @if ($bookings->hasPages())
+        <div class="table-pagination" style="margin-top: 1rem;">{{ $bookings->links() }}</div>
+    @endif
 </div>
 @endsection

@@ -1,85 +1,30 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Society Complaints Registry — Nestora')
+@section('title', 'Complaints Registry - Nestora')
 
 @section('content')
-<div class="db-header">
-    <h1 class="db-title">Maintenance Complaints Registry</h1>
-    <p class="db-subtitle">Monitor maintenance tickets filed by residents and delegate them to repair technicians.</p>
-</div>
-
-<!-- Complaints Table -->
+<div class="db-header"><h1 class="db-title">Maintenance Complaints Registry</h1><p class="db-subtitle">Delegate resident issues to maintenance staff.</p></div>
+@if(session('status'))<div class="alert alert-success" style="margin-bottom:1rem;">{{ session('status') }}</div>@endif
 <div class="table-responsive">
-    <div class="table-toolbar">
-        <div class="table-toolbar-left">
-            <select class="form-control form-select" style="max-width: 180px;">
-                <option value="">All Categories</option>
-                <option value="plumbing">Plumbing</option>
-                <option value="electrical">Electrical</option>
-                <option value="carpentry">Carpentry</option>
-            </select>
-            <select class="form-control form-select" style="max-width: 180px;">
-                <option value="">All Statuses</option>
-                <option value="pending">Pending Assignment</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-            </select>
-        </div>
-    </div>
-    
     <table class="db-table">
-        <thead>
-            <tr>
-                <th>Ticket ID</th>
-                <th>Unit / Resident</th>
-                <th>Subject & Category</th>
-                <th>Date Filed</th>
-                <th>Urgency</th>
-                <th>Assigned Technician</th>
-                <th>Status</th>
-                <th style="text-align: right;">Action</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Ticket</th><th>Resident / Flat</th><th>Issue</th><th>Priority</th><th>Technician</th><th>Status</th><th style="text-align:right;">Action</th></tr></thead>
         <tbody>
-            <tr>
-                <td style="font-weight: 700;">#T-2033</td>
-                <td style="font-weight: 600;">Flat 3B<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">John Doe</div></td>
-                <td>
-                    <div style="font-weight: 700;">Bathroom pipe leakage</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Plumbing Category</div>
-                </td>
-                <td>July 02, 2026</td>
-                <td><span class="badge badge-rejected" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">high</span></td>
-                <td style="font-weight: 600;">Ali Khan (Plumber)</td>
-                <td><span class="badge badge-in-progress">in progress</span></td>
-                <td style="text-align: right;">
-                    <a href="{{ url('/manager/complaints/2033/assign') }}" class="btn btn-outline btn-sm">Reassign Staff</a>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: 700;">#T-1804</td>
-                <td style="font-weight: 600;">Flat 3B<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">John Doe</div></td>
-                <td>
-                    <div style="font-weight: 700;">Intercom handset static noise</div>
-                    <div style="font-size: 0.75rem; color: var(--text-muted);">Electrical Category</div>
-                </td>
-                <td>June 18, 2026</td>
-                <td><span class="badge badge-pending" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">medium</span></td>
-                <td style="font-weight: 600;">Hasan Kabir (Electrician)</td>
-                <td><span class="badge badge-resolved">resolved</span></td>
-                <td style="text-align: right;">
-                    <span class="text-muted text-xs">Completed</span>
-                </td>
-            </tr>
+            @forelse($complaints as $complaint)
+                @php($workOrder = $complaint->workOrders->sortByDesc('created_at')->first())
+                <tr>
+                    <td style="font-weight:700;">#{{ $complaint->id }}</td>
+                    <td>{{ $complaint->resident?->name ?? '-' }}<div class="text-muted text-xs">{{ $complaint->flat?->flat_number ?? 'No flat' }}</div></td>
+                    <td><strong>{{ $complaint->title }}</strong><div class="text-muted text-xs">{{ $complaint->category ?? 'General' }}</div></td>
+                    <td><span class="badge badge-pending">{{ $complaint->priority }}</span></td>
+                    <td>{{ $workOrder?->assignedStaff?->name ?? 'Unassigned' }}</td>
+                    <td><span class="badge badge-in-progress">{{ str_replace('_',' ',$complaint->status) }}</span></td>
+                    <td style="text-align:right;"><a href="{{ route('manager.complaints.assign', $complaint) }}" class="btn btn-outline btn-sm">{{ $workOrder ? 'Reassign' : 'Assign Staff' }}</a></td>
+                </tr>
+            @empty
+                <tr><td colspan="7" style="text-align:center;padding:2rem;">No complaints found.</td></tr>
+            @endforelse
         </tbody>
     </table>
-    
-    <div class="table-pagination">
-        <div class="pagination-info">Showing <strong>2</strong> complaints</div>
-        <div class="pagination-btns">
-            <button type="button" class="btn btn-outline btn-sm" disabled>Previous</button>
-            <button type="button" class="btn btn-outline btn-sm" disabled>Next</button>
-        </div>
-    </div>
+    <div class="table-pagination"><div class="pagination-info">{{ $complaints->total() }} complaints</div><div class="pagination-btns">@if($complaints->previousPageUrl())<a href="{{ $complaints->previousPageUrl() }}" class="btn btn-outline btn-sm">Previous</a>@endif @if($complaints->nextPageUrl())<a href="{{ $complaints->nextPageUrl() }}" class="btn btn-outline btn-sm">Next</a>@endif</div></div>
 </div>
 @endsection

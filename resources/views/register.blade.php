@@ -86,14 +86,14 @@
             <!-- Full Name -->
             <div class="form-group">
                 <label for="reg-name" class="form-label">Full Name</label>
-                <input type="text" id="reg-name" name="name" class="form-control" placeholder="e.g. John Doe" value="{{ old('name') }}" required>
+                <input type="text" id="reg-name" name="name" class="form-control" placeholder="e.g. shorif" value="{{ old('name') }}" required>
             </div>
             
             <div class="grid grid-2">
                 <!-- Email -->
                 <div class="form-group">
                     <label for="reg-email" class="form-label">Email Address</label>
-                    <input type="email" id="reg-email" name="email" class="form-control" placeholder="e.g. john@example.com" value="{{ old('email') }}" required autocomplete="email">
+                    <input type="email" id="reg-email" name="email" class="form-control" placeholder="e.g. shorif@example.com" value="{{ old('email') }}" required autocomplete="email">
                 </div>
                 
                 <!-- Phone -->

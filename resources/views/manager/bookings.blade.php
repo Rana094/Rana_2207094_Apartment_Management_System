@@ -1,80 +1,31 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Amenity Reservations Queue — Nestora')
+@section('title', 'Facility Bookings - Nestora')
 
 @section('content')
-<div class="db-header">
-    <h1 class="db-title">Amenity Reservations Queue</h1>
-    <p class="db-subtitle">Approve or reject resident booking requests for community spaces and track booking deposits.</p>
-</div>
-
-<!-- Bookings Queue Table -->
+<div class="db-header"><h1 class="db-title">Amenity Reservations Queue</h1><p class="db-subtitle">Approve or reject resident facility requests.</p></div>
+@if(session('status'))<div class="alert alert-success" style="margin-bottom:1rem;">{{ session('status') }}</div>@endif
 <div class="table-responsive">
-    <div class="table-toolbar">
-        <div class="table-toolbar-left">
-            <select class="form-control form-select" style="max-width: 200px;">
-                <option value="">All Spaces</option>
-                <option value="hall">Community Hall</option>
-                <option value="bbq">Rooftop BBQ Grill</option>
-            </select>
-            <select class="form-control form-select" style="max-width: 200px;">
-                <option value="">All Statuses</option>
-                <option value="pending">Pending Approval</option>
-                <option value="approved">Approved</option>
-            </select>
-        </div>
-    </div>
-    
     <table class="db-table">
-        <thead>
-            <tr>
-                <th>Booking Ref</th>
-                <th>Resident / Flat</th>
-                <th>Selected Space</th>
-                <th>Reserved Timings</th>
-                <th>Dues Amount</th>
-                <th>Payment</th>
-                <th>Status</th>
-                <th style="text-align: right;">Approval Actions</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Reference</th><th>Resident</th><th>Facility</th><th>Date & Time</th><th>Purpose</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
         <tbody>
-            <tr>
-                <td style="font-weight: 700;">#BK-3870</td>
-                <td style="font-weight: 600;">John Doe<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Flat 3B</div></td>
-                <td>Rooftop BBQ Grill Station</td>
-                <td>July 09, 2026<div style="font-size: 0.75rem; color: var(--text-muted);">06:00 PM - 10:00 PM</div></td>
-                <td style="font-weight: 600;">৳ 1,500</td>
-                <td><span class="badge badge-unpaid">unpaid</span></td>
-                <td><span class="badge badge-pending-verification" style="color: var(--color-pending); background-color: var(--bg-pending);">pending</span></td>
-                <td style="text-align: right;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="alert('Booking approved.');">Approve</button>
-                        <button type="button" class="btn btn-outline btn-sm" onclick="showConfirmModal('Reject Booking Request?', 'Reject Rooftop BBQ reservation?', function(){ alert('Booking rejected.'); }, true)">Reject</button>
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: 700;">#BK-4091</td>
-                <td style="font-weight: 600;">John Doe<div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Flat 3B</div></td>
-                <td>Community Hall (Tower 1)</td>
-                <td>July 12, 2026<div style="font-size: 0.75rem; color: var(--text-muted);">04:00 PM - 09:00 PM</div></td>
-                <td style="font-weight: 600;">৳ 5,000</td>
-                <td><span class="badge badge-paid">paid</span></td>
-                <td><span class="badge badge-approved">approved</span></td>
-                <td style="text-align: right;">
-                    <span class="text-muted text-xs">Locked</span>
-                </td>
-            </tr>
+            @forelse($bookings as $booking)
+                <tr>
+                    <td style="font-weight:700;">#BK-{{ $booking->id }}</td><td>{{ $booking->resident?->name ?? '-' }}</td><td>{{ $booking->facility?->name ?? '-' }}</td>
+                    <td>{{ $booking->booking_date?->format('M d, Y') }}<div class="text-muted text-xs">{{ $booking->start_time }} - {{ $booking->end_time }}</div></td><td>{{ $booking->purpose ?? '-' }}</td>
+                    <td><span class="badge badge-{{ $booking->status === 'approved' ? 'approved' : 'pending' }}">{{ $booking->status }}</span></td>
+                    <td style="text-align:right;">
+                        @if($booking->status === 'pending')
+                            <div style="display:inline-flex;gap:.5rem;">
+                                <form method="POST" action="{{ route('manager.bookings.status',$booking) }}">@csrf<input type="hidden" name="status" value="approved"><button class="btn btn-primary btn-sm">Approve</button></form>
+                                <form id="reject-booking-{{ $booking->id }}" method="POST" action="{{ route('manager.bookings.status',$booking) }}">@csrf<input type="hidden" name="status" value="rejected"><button type="button" class="btn btn-danger btn-sm" onclick="showConfirmModal('Reject booking?', 'Reject this facility request?', function(){ document.getElementById('reject-booking-{{ $booking->id }}').submit(); }, true)">Reject</button></form>
+                            </div>
+                        @else<span class="text-muted text-xs">Decision recorded</span>@endif
+                    </td>
+                </tr>
+            @empty<tr><td colspan="7" style="text-align:center;padding:2rem;">No booking requests.</td></tr>@endforelse
         </tbody>
     </table>
-    
-    <div class="table-pagination">
-        <div class="pagination-info">Showing <strong>2</strong> requests</div>
-        <div class="pagination-btns">
-            <button type="button" class="btn btn-outline btn-sm" disabled>Previous</button>
-            <button type="button" class="btn btn-outline btn-sm" disabled>Next</button>
-        </div>
-    </div>
+    <div class="table-pagination"><div class="pagination-info">{{ $bookings->total() }} bookings</div><div class="pagination-btns">@if($bookings->previousPageUrl())<a href="{{ $bookings->previousPageUrl() }}" class="btn btn-outline btn-sm">Previous</a>@endif @if($bookings->nextPageUrl())<a href="{{ $bookings->nextPageUrl() }}" class="btn btn-outline btn-sm">Next</a>@endif</div></div>
 </div>
 @endsection

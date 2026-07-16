@@ -30,9 +30,6 @@
     <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--border-color); padding-bottom: 2rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h2 class="logo" style="margin-bottom: 0.5rem;">
-                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 1.5rem; height: 1.5rem;">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21" />
-                </svg>
                 Nestora<span>.</span>
             </h2>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0;">Smart Apartment Management Made Simple</p>
@@ -48,7 +45,7 @@
     <div class="grid grid-2" style="margin-bottom: 2.5rem; gap: 2rem;">
         <div>
             <h4 style="text-transform: uppercase; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 0.5rem;">Billed To:</h4>
-            <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">John Doe</div>
+            <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">ullas</div>
             <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.25rem;">
                 Flat 3B, Building A (Tower 1)<br>
                 Nestora Residential Complex<br>
@@ -83,21 +80,21 @@
         <tbody>
             <tr>
                 <td style="font-weight: 600;">Monthly Flat Service Charge<div style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">Includes garbage pickup, cleaning of common areas</div></td>
-                <td style="text-align: right;">৳ 3,000</td>
+                <td style="text-align: right;"><span class="money"><x-taka />3,000</span></td>
                 <td style="text-align: right;">1</td>
-                <td style="font-weight: 600; text-align: right;">৳ 3,000</td>
+                <td style="font-weight: 600; text-align: right;"><span class="money"><x-taka />3,000</span></td>
             </tr>
             <tr>
                 <td style="font-weight: 600;">Security Levy Charge<div style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">24/7 gate security guards payroll share</div></td>
-                <td style="text-align: right;">৳ 500</td>
+                <td style="text-align: right;"><span class="money"><x-taka />500</span></td>
                 <td style="text-align: right;">1</td>
-                <td style="font-weight: 600; text-align: right;">৳ 500</td>
+                <td style="font-weight: 600; text-align: right;"><span class="money"><x-taka />500</span></td>
             </tr>
             <tr>
                 <td style="font-weight: 600;">Standby Generator Surcharge<div style="font-weight: normal; font-size: 0.8rem; color: var(--text-muted);">Common utility area power fuel consumption share</div></td>
-                <td style="text-align: right;">৳ 1,000</td>
+                <td style="text-align: right;"><span class="money"><x-taka />1,000</span></td>
                 <td style="text-align: right;">1</td>
-                <td style="font-weight: 600; text-align: right;">৳ 1,000</td>
+                <td style="font-weight: 600; text-align: right;"><span class="money"><x-taka />1,000</span></td>
             </tr>
         </tbody>
     </table>
@@ -107,15 +104,15 @@
         <div style="width: 100%; max-width: 340px;">
             <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem;">
                 <span class="text-muted">Subtotal:</span>
-                <span style="font-weight: 600;">৳ 4,500</span>
+                <span class="money" style="font-weight: 600;"><x-taka />4,500</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; border-bottom: 1px solid var(--border-color);">
                 <span class="text-muted">Taxes & Levies (0%):</span>
-                <span style="font-weight: 600;">৳ 0</span>
+                <span class="money" style="font-weight: 600;"><x-taka />0</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 0.75rem 0; font-size: 1.15rem; border-bottom: 2px double var(--border-color); margin-bottom: 1.5rem;">
                 <span style="font-weight: 700; color: var(--text-primary);">Total Due:</span>
-                <span style="font-weight: 800; color: var(--primary-color);">৳ 4,500</span>
+                <span class="money" style="font-weight: 800; color: var(--primary-color);"><x-taka />4,500</span>
             </div>
         </div>
     </div>

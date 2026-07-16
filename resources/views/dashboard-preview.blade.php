@@ -76,7 +76,7 @@
     <div class="stat-card">
         <div class="stat-card-left">
             <span class="stat-label-text">Pending Dues</span>
-            <span class="stat-val">৳ 45,600</span>
+            <span class="stat-val money"><x-taka />45,600</span>
             <span class="stat-trend down" style="color: var(--color-rejected);">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 0.875rem; height: 0.875rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" /></svg>
                 8% increase
@@ -120,12 +120,12 @@
         </div>
         
         <div class="flex gap-3">
-            <button type="button" class="btn btn-danger" style="flex: 1; font-size: 0.85rem;" onclick="showConfirmModal('Delete Resident?', 'Are you absolutely sure you want to delete resident John Doe? This action will archive their flat contract.', function(){ alert('Mock: Resident deleted successfully.'); }, true)">
-                Danger Modal Trigger
-            </button>
-            <button type="button" class="btn btn-primary" style="flex: 1; font-size: 0.85rem;" onclick="showConfirmModal('Verify Bill Payment?', 'Verify payment receipt proof and mark bill #B-9022 as PAID?', function(){ alert('Mock: Payment verified.'); }, false)">
-                Safe Action Modal Trigger
-            </button>
+            <a href="{{ route('login') }}" class="btn btn-danger" style="flex: 1; font-size: 0.85rem;">
+                Open Live Portal
+            </a>
+            <a href="{{ route('login') }}" class="btn btn-primary" style="flex: 1; font-size: 0.85rem;">
+                Review Live Actions
+            </a>
         </div>
     </div>
 </div>
@@ -203,8 +203,8 @@
                 <td><span class="badge badge-approved">approved</span></td>
                 <td style="text-align: right;">
                     <div style="display: inline-flex; gap: 0.5rem;">
-                        <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;" title="Edit details">Edit</button>
-                        <button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem;" title="Deactivate account" onclick="showConfirmModal('Block Resident Account?', 'Confirm you want to suspend access for Kabir Hossain?', function(){ alert('Mock: Account suspended.'); }, true)">Block</button>
+                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;" title="Edit details">Edit</a>
+                        <a href="{{ route('login') }}" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem;" title="Deactivate account">Block</a>
                     </div>
                 </td>
             </tr>
@@ -216,8 +216,8 @@
                 <td><span class="badge badge-pending-verification">pending verification</span></td>
                 <td style="text-align: right;">
                     <div style="display: inline-flex; gap: 0.5rem;">
-                        <button type="button" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.5rem;" title="Approve resident">Approve</button>
-                        <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;" title="Verify documents">Docs</button>
+                        <a href="{{ route('login') }}" class="btn btn-primary btn-sm" style="padding: 0.25rem 0.5rem;" title="Approve resident">Approve</a>
+                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;" title="Verify documents">Docs</a>
                     </div>
                 </td>
             </tr>
@@ -229,8 +229,8 @@
                 <td><span class="badge badge-pending">pending</span></td>
                 <td style="text-align: right;">
                     <div style="display: inline-flex; gap: 0.5rem;">
-                        <button type="button" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;">Edit</button>
-                        <button type="button" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem;" onclick="showConfirmModal('Reject Registration?', 'Confirm you want to reject registration request from Farhan Chowdhury?', function(){ alert('Mock: Request rejected.'); }, true)">Reject</button>
+                        <a href="{{ route('login') }}" class="btn btn-outline btn-sm" style="padding: 0.25rem 0.5rem;">Edit</a>
+                        <a href="{{ route('login') }}" class="btn btn-danger btn-sm" style="padding: 0.25rem 0.5rem;">Reject</a>
                     </div>
                 </td>
             </tr>

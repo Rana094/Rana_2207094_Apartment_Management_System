@@ -344,17 +344,6 @@
                 <p>Deliver clear reports on monthly income, service charge collection rates, pending dues, and building expenses to the management board.</p>
             </div>
 
-            <!-- 10. Polls & Voting -->
-            <div class="feature-card" style="grid-column: span 1; justify-self: center; width: 100%;">
-                <div class="feature-icon-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.125 2.25h3.75a2.25 2.25 0 0 1 2.25 2.25v15a2.25 2.25 0 0 1-2.25 2.25h-3.75a2.25 2.25 0 0 1-2.25-2.25v-15a2.25 2.25 0 0 1 2.25-2.25Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6h6m-6 3h6m-6 3h6m-6 3h6" />
-                    </svg>
-                </div>
-                <h3>Polls & Voting</h3>
-                <p>Gather opinions and conduct votes on society decisions, building upgrades, or executive committee elections in a secure way.</p>
-            </div>
         </div>
     </div>
 </section>

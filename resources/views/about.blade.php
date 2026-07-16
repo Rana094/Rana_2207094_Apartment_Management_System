@@ -223,7 +223,7 @@
                     </svg>
                 </div>
                 <h3 style="font-size: 1.15rem; margin-bottom: 0.75rem;">Healthy Ties</h3>
-                <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">Encouraging resident participation via democratic polls, central notice boards, and booking of shared venues.</p>
+                <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0;">Keeping residents informed through central notice boards and simple booking of shared venues.</p>
             </div>
         </div>
     </div>

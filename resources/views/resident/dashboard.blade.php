@@ -5,16 +5,13 @@
 @section('content')
 <div class="db-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
-        <h1 class="db-title">Welcome Back, John Doe</h1>
+        <h1 class="db-title">Welcome Back, ullas</h1>
         <p class="db-subtitle">Here is a quick overview of your flat status, billing cycle, and recent notices.</p>
     </div>
     
     <!-- Emergency Panic Button -->
     <a href="{{ url('/resident/emergency') }}" class="btn btn-danger" style="background-color: var(--color-emergency); font-size: 0.9rem; animation: pulse 2s infinite; border: 1px solid #fda4af;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.34 15.84c-.68-.69-1.89-.69-2.58 0L5.04 18.6a2.29 2.29 0 0 0 0 3.24c.9.9 2.34.9 3.24 0l2.76-2.76c.68-.69.68-1.89 0-2.58Z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.14 11.94c.24-.3.49-.62.74-.95a5.3 5.3 0 0 0-7.85-6.84L9.14 7.04c-.3.25-.63.5-.95.74m10.95 4.16a2.29 2.29 0 0 1 0 3.24l-2.76 2.76c-.69.68-1.89.68-2.58 0L10.94 15" />
-        </svg>
+        <x-icon name="alarm" alt="" size="1.25rem" class="app-icon-on-danger" />
         Trigger Emergency Request
     </a>
 </div>
@@ -39,13 +36,8 @@
     <div class="stat-card">
         <div class="stat-card-left">
             <span class="stat-label-text">Current Bill</span>
-            <span class="stat-val" style="font-size: 1.5rem;">৳ 4,500</span>
+            <span class="stat-val money" style="font-size: 1.5rem;"><x-taka />4,500</span>
             <span style="font-size: 0.75rem; color: var(--color-rejected); font-weight: 600; margin-top: 0.25rem;">Due by: July 10, 2026</span>
-        </div>
-        <div class="stat-icon danger" style="background-color: var(--bg-rejected); color: var(--color-rejected);">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.5rem; height: 1.5rem;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6" />
-            </svg>
         </div>
     </div>
 
@@ -57,11 +49,6 @@
                 <span class="badge badge-unpaid">unpaid</span>
             </div>
             <span style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">July Service Charge</span>
-        </div>
-        <div class="stat-icon warning">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 1.5rem; height: 1.5rem;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068" />
-            </svg>
         </div>
     </div>
 

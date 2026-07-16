@@ -45,7 +45,7 @@
                 <td style="font-weight: 700;">#B-9872</td>
                 <td style="font-weight: 600;">July 2026</td>
                 <td>Service Charge</td>
-                <td style="font-weight: 700;">৳ 4,500</td>
+                <td style="font-weight: 700;"><span class="money"><x-taka />4,500</span></td>
                 <td>July 10, 2026</td>
                 <td><span class="badge badge-unpaid">unpaid</span></td>
                 <td style="text-align: right;">
@@ -59,7 +59,7 @@
                 <td style="font-weight: 700;">#B-9540</td>
                 <td style="font-weight: 600;">June 2026</td>
                 <td>Utility (Electricity)</td>
-                <td style="font-weight: 700;">৳ 2,120</td>
+                <td style="font-weight: 700;"><span class="money"><x-taka />2,120</span></td>
                 <td>June 15, 2026</td>
                 <td><span class="badge badge-pending-verification">pending verification</span></td>
                 <td style="text-align: right;">
@@ -73,7 +73,7 @@
                 <td style="font-weight: 700;">#B-9022</td>
                 <td style="font-weight: 600;">June 2026</td>
                 <td>Service Charge</td>
-                <td style="font-weight: 700;">৳ 4,500</td>
+                <td style="font-weight: 700;"><span class="money"><x-taka />4,500</span></td>
                 <td>June 10, 2026</td>
                 <td><span class="badge badge-paid">paid</span></td>
                 <td style="text-align: right;">
@@ -84,7 +84,7 @@
                 <td style="font-weight: 700;">#B-8801</td>
                 <td style="font-weight: 600;">May 2026</td>
                 <td>Service Charge</td>
-                <td style="font-weight: 700;">৳ 4,500</td>
+                <td style="font-weight: 700;"><span class="money"><x-taka />4,500</span></td>
                 <td>May 10, 2026</td>
                 <td><span class="badge badge-paid">paid</span></td>
                 <td style="text-align: right;">

@@ -47,15 +47,11 @@
                         </span>
                     </td>
                     <td>
-                        <!-- Mock Verification Documents download button -->
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <button type="button" class="btn btn-outline btn-xs" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="alert('Mock: Downloading NID verification copy.');">
-                                NID File
-                            </button>
-                            <button type="button" class="btn btn-outline btn-xs" style="padding: 0.15rem 0.4rem; font-size: 0.75rem;" onclick="alert('Mock: Downloading Lease Verification agreement.');">
-                                Lease Agreement
-                            </button>
-                        </div>
+                        @if ($resident->signupDocumentUrl())
+                            <a href="{{ $resident->signupDocumentUrl() }}" class="btn btn-outline btn-sm">View registration file</a>
+                        @else
+                            <span style="color: var(--text-muted);">No file submitted</span>
+                        @endif
                     </td>
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 0.5rem;">

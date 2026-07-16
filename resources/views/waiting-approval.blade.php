@@ -126,6 +126,11 @@
                 {{ session('status') }}
             </div>
         @endif
+        @error('email')
+            <div style="background: var(--bg-rejected); color: var(--color-rejected); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
+                {{ $message }}
+            </div>
+        @enderror
         <p class="status-desc">
             Your account is waiting for email verification and manager approval. Once verified and approved by the building management, your portal access will be unlocked.
         </p>
@@ -164,7 +169,7 @@
             </li>
         </ul>
         
-        <!-- Interactive Mock Actions -->
+        <!-- Account approval actions -->
         <div class="flex flex-col gap-3">
             @auth
                 @if (! auth()->user()->hasVerifiedEmail())

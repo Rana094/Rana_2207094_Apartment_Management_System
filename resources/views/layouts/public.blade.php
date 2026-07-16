@@ -16,14 +16,20 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body>
+    @php
+        $publicUser = auth()->user();
+        $portalUrl = $publicUser
+            ? ($publicUser->hasVerifiedEmail() && $publicUser->isApproved()
+                ? route($publicUser->dashboardRouteName())
+                : route('approval.pending'))
+            : null;
+    @endphp
+
     <!-- Public Header / Navbar -->
     <header class="pub-header">
         <div class="container pub-nav">
             <!-- Logo -->
             <a href="{{ url('/') }}" class="logo">
-                <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M2.25 9l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 9M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                </svg>
                 Nestora<span>.</span>
             </a>
 
@@ -42,14 +48,19 @@
 
             <!-- Actions / Auth Button -->
             <div class="nav-actions">
-                <a href="{{ url('/login') }}" class="btn btn-outline btn-sm">Log In</a>
-                <a href="{{ url('/register') }}" class="btn btn-primary btn-sm">Resident Sign Up</a>
+                @auth
+                    <a href="{{ $portalUrl }}" class="btn btn-primary btn-sm">My Portal</a>
+                    <form method="POST" action="{{ route('logout') }}" style="display: inline-flex;">
+                        @csrf
+                        <button type="submit" class="btn btn-outline btn-sm">Log Out</button>
+                    </form>
+                @else
+                    <a href="{{ url('/login') }}" class="btn btn-outline btn-sm">Log In</a>
+                    <a href="{{ url('/register') }}" class="btn btn-primary btn-sm">Resident Sign Up</a>
+                @endauth
                 
                 <!-- Mobile Navigation Toggle Button -->
                 <button class="mobile-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation Menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1.75rem; height: 1.75rem;">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-                    </svg>
                 </button>
             </div>
         </div>
@@ -61,8 +72,16 @@
                 <li><a href="{{ url('/about') }}" class="nav-link {{ Request::is('about') ? 'active' : '' }}">About</a></li>
                 <li><a href="{{ url('/contact') }}" class="nav-link {{ Request::is('contact') ? 'active' : '' }}">Contact</a></li>
                 <li style="border-top: 1px solid var(--border-color); padding-top: 0.5rem; display: flex; gap: 0.5rem;">
-                    <a href="{{ url('/login') }}" class="btn btn-outline btn-sm" style="flex: 1;">Log In</a>
-                    <a href="{{ url('/register') }}" class="btn btn-primary btn-sm" style="flex: 1;">Sign Up</a>
+                    @auth
+                        <a href="{{ $portalUrl }}" class="btn btn-primary btn-sm" style="flex: 1;">My Portal</a>
+                        <form method="POST" action="{{ route('logout') }}" style="flex: 1; display: flex;">
+                            @csrf
+                            <button type="submit" class="btn btn-outline btn-sm" style="width: 100%;">Log Out</button>
+                        </form>
+                    @else
+                        <a href="{{ url('/login') }}" class="btn btn-outline btn-sm" style="flex: 1;">Log In</a>
+                        <a href="{{ url('/register') }}" class="btn btn-primary btn-sm" style="flex: 1;">Sign Up</a>
+                    @endauth
                 </li>
             </ul>
         </div>
@@ -79,9 +98,6 @@
             <div class="pub-footer-grid">
                 <div>
                     <h4 class="logo" style="color: #ffffff; font-size: 1.5rem; margin-bottom: 1rem;">
-                        <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 1.5rem; height: 1.5rem;">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M2.25 9l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 9M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                        </svg>
                         Nestora<span>.</span>
                     </h4>
                     <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem;">

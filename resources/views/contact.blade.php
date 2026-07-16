@@ -154,33 +154,33 @@
                     </div>
                 @endif
                 
-                <form action="#" method="POST">
+                <form action="{{ route('contact.store') }}" method="POST">
                     @csrf
                     <div class="grid grid-2">
                         <div class="form-group">
                             <label for="contact-name" class="form-label">Full Name</label>
-                            <input type="text" id="contact-name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+                            <input type="text" id="contact-name" name="name" class="form-control" value="{{ old('name') }}" placeholder="e.g. ullas" required>
                         </div>
                         <div class="form-group">
                             <label for="contact-email" class="form-label">Email Address</label>
-                            <input type="email" id="contact-email" name="email" class="form-control" placeholder="e.g. john@example.com" required>
+                            <input type="email" id="contact-email" name="email" class="form-control" value="{{ old('email') }}" placeholder="e.g. ullas@example.com" required>
                         </div>
                     </div>
                     
                     <div class="grid grid-2">
                         <div class="form-group">
                             <label for="contact-phone" class="form-label">Phone Number</label>
-                            <input type="tel" id="contact-phone" name="phone" class="form-control" placeholder="e.g. +880 1711 223344">
+                            <input type="tel" id="contact-phone" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="e.g. +880 1711 223344">
                         </div>
                         <div class="form-group">
                             <label for="contact-subject" class="form-label">Subject</label>
-                            <input type="text" id="contact-subject" name="subject" class="form-control" placeholder="e.g. Request Demo / Setup Dues" required>
+                            <input type="text" id="contact-subject" name="subject" class="form-control" value="{{ old('subject') }}" placeholder="e.g. Request Demo / Setup Dues" required>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="contact-message" class="form-label">Message Details</label>
-                        <textarea id="contact-message" name="message" class="form-control" rows="5" placeholder="Type your questions or description of your society here..." required></textarea>
+                        <textarea id="contact-message" name="message" class="form-control" rows="5" placeholder="Type your questions or description of your society here..." required>{{ old('message') }}</textarea>
                     </div>
                     
                     <div style="text-align: right; margin-top: 1rem;">

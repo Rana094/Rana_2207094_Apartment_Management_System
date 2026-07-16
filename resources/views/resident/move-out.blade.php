@@ -33,7 +33,7 @@
     <div class="card" style="grid-column: span 2;">
         <h3 style="margin-bottom: 1.25rem; font-size: 1.25rem;">Notice of Intent Form</h3>
         
-        <form action="#" method="POST" id="moveout-form">
+        <form action="{{ route('resident.move-out.store') }}" method="POST" id="moveout-form">
             @csrf
             
             <div class="grid grid-2">
@@ -72,54 +72,26 @@
                 </label>
             </div>
             
-            <button type="button" class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="submitMoveoutRequest()">
+            <button type="submit" class="btn btn-danger" style="width: 100%; justify-content: center;">
                 Submit Notice of Vacating
             </button>
         </form>
 
-        <!-- Hidden Alert State after submit -->
-        <div id="moveout-success-state" style="display: none; text-align: center; padding: 2rem 0;">
-            <div class="badge badge-pending-verification" style="padding: 0.5rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.95rem;">Clearance Status: Pending Manager Review</div>
-            <p style="font-weight: 700; font-size: 1.15rem; color: var(--text-primary); margin-bottom: 0.5rem;">Vacating Notice Submitted</p>
-            <p style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6; max-width: 440px; margin: 0 auto 1.5rem auto;">
-                Your move-out clearance file has been logged. The building manager will cross-verify service logs and finalize your billing ledger before approving your clearance pass.
-            </p>
-            <button type="button" class="btn btn-outline btn-sm" onclick="cancelMoveoutRequest()">
-                Cancel Notice Request
-            </button>
+        <div style="margin-top: 1.5rem;">
+            <h4 style="margin-bottom: .75rem;">Request History</h4>
+            @forelse ($moveOutRequests as $request)
+                <div class="card-static" style="margin-bottom: .75rem;">
+                    <div style="display:flex; justify-content:space-between; gap:1rem;">
+                        <strong>{{ $request->requested_move_out_date?->format('M d, Y') }}</strong>
+                        <span class="badge badge-pending-verification">{{ $request->status }}</span>
+                    </div>
+                    <p style="margin:.5rem 0 0; color: var(--text-secondary); font-size:.85rem;">{{ $request->reason ?: 'No reason provided.' }}</p>
+                </div>
+            @empty
+                <p style="font-size:.85rem; color: var(--text-muted);">No move-out requests submitted yet.</p>
+            @endforelse
         </div>
     </div>
 
 </div>
-
-<script>
-    function submitMoveoutRequest() {
-        const form = document.getElementById('moveout-form');
-        const success = document.getElementById('moveout-success-state');
-        const checkbox = document.querySelector('input[name="dues_ack"]');
-        const reason = document.getElementById('move-reason');
-        const address = document.getElementById('move-address');
-
-        if (!reason.value || !address.value || !checkbox.checked) {
-            alert('Please fill out all fields and accept the dues acknowledgement checkbox.');
-            return;
-        }
-
-        if (form && success) {
-            form.style.display = 'none';
-            success.style.display = 'block';
-        }
-    }
-
-    function cancelMoveoutRequest() {
-        const form = document.getElementById('moveout-form');
-        const success = document.getElementById('moveout-success-state');
-        
-        if (form && success) {
-            success.style.display = 'none';
-            form.style.display = 'block';
-            alert('Vacating notice has been cancelled.');
-        }
-    }
-</script>
 @endsection

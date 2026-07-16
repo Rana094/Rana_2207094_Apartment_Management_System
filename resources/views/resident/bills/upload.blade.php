@@ -16,22 +16,23 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem;">Transaction Proof Form</h3>
         
-        <!-- Redirects back to bills with mock success alert -->
-        <form action="{{ url('/resident/bills') }}" method="GET" enctype="multipart/form-data">
-            <!-- Hidden session flag to trigger success message in bills page -->
-            <input type="hidden" name="payment_submitted" value="1">
+        @if (! $bill)
+            <div class="alert alert-danger">This bill is not connected to the database. Open a bill from your billing list.</div>
+        @else
+        <form action="{{ route('resident.bills.payment-proofs.store', $bill) }}" method="POST" enctype="multipart/form-data">
+            @csrf
             
             <div class="grid grid-2">
                 <!-- Bill reference -->
                 <div class="form-group">
                     <label for="bill-ref" class="form-label">Bill Reference</label>
-                    <input type="text" id="bill-ref" class="form-control" value="July 2026 Service Charge (#B-9872)" readonly style="background-color: var(--bg-main); font-weight: 600;">
+                    <input type="text" id="bill-ref" class="form-control" value="{{ ucfirst($bill->type) }} (#{{ $bill->bill_number }})" readonly style="background-color: var(--bg-main); font-weight: 600;">
                 </div>
                 
                 <!-- Amount to pay -->
                 <div class="form-group">
-                    <label for="amount-paid" class="form-label">Amount Paid (৳)</label>
-                    <input type="number" id="amount-paid" name="amount" class="form-control" value="4500" required>
+                    <label for="amount-paid" class="form-label">Amount Paid <span class="money"><x-taka /></span></label>
+                    <input type="number" id="amount-paid" name="amount" class="form-control" value="{{ $bill->amount }}" step="0.01" required>
                 </div>
             </div>
 
@@ -81,10 +82,11 @@
             </div>
 
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <a href="{{ url('/resident/bills') }}" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancel</a>
+                <a href="{{ route('resident.bills.show', $bill) }}" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancel</a>
                 <button type="submit" class="btn btn-primary" style="flex: 2; justify-content: center;">Submit Proof for Verification</button>
             </div>
         </form>
+        @endif
     </div>
 </div>
 
