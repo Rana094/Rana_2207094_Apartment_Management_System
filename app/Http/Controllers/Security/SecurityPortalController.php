@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Security;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Security\StoreSecurityIncidentRequest;
 use App\Models\EmergencyRequest;
 use App\Models\Flat;
 use App\Models\ResidentProfile;
@@ -47,7 +48,7 @@ class SecurityPortalController extends Controller
     {
         if ($request->filled('passcode')) {
             $visitor = $this->findVisitorByCode($request->input('passcode'));
-            abort_unless($visitor, 404);
+            abort_unless($visitor !== null, 404);
 
             $visitor->update([
                 'status' => 'checked_in',
@@ -72,7 +73,7 @@ class SecurityPortalController extends Controller
         $resident = ResidentProfile::where('flat_id', $validated['flat_id'])->where('status', 'active')->first()?->user
             ?? User::where('role', 'resident')->where('status', 'approved')->first();
 
-        abort_unless($resident, 422, 'No approved resident exists for this manual visitor entry.');
+        abort_unless($resident !== null, 422, 'No approved resident exists for this manual visitor entry.');
 
         $visitor = VisitorRequest::create([
             'resident_id' => $resident->id,
@@ -110,7 +111,7 @@ class SecurityPortalController extends Controller
         ]);
 
         $visitor = $this->findVisitorByCode($validated['passcode']);
-        abort_unless($visitor, 404);
+        abort_unless($visitor !== null, 404);
 
         $visitor->update([
             'status' => 'checked_out',
@@ -145,7 +146,7 @@ class SecurityPortalController extends Controller
         ]);
 
         $resident = User::where('role', 'resident')->where('status', 'approved')->first();
-        abort_unless($resident, 422, 'At least one approved resident is required before creating a security emergency alert.');
+        abort_unless($resident !== null, 422, 'At least one approved resident is required before creating a security emergency alert.');
 
         $profile = $resident->residentProfile;
 
@@ -176,16 +177,9 @@ class SecurityPortalController extends Controller
         ]);
     }
 
-    public function storeIncident(Request $request): RedirectResponse
+    public function storeIncident(StoreSecurityIncidentRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'subject' => ['required', 'string', 'max:255'],
-            'category' => ['required', 'string', 'max:100'],
-            'date' => ['required', 'date'],
-            'time' => ['required', 'date_format:H:i'],
-            'flat_id' => ['nullable', 'exists:flats,id'],
-            'description' => ['required', 'string', 'max:5000'],
-        ]);
+        $validated = $request->validated();
 
         SecurityIncident::create([
             'reported_by' => $request->user()->id,

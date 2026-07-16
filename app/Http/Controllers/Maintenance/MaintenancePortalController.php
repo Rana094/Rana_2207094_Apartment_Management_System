@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Maintenance\UpdateWorkOrderRequest;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderNote;
 use Illuminate\Http\RedirectResponse;
@@ -71,9 +72,9 @@ class MaintenancePortalController extends Controller
         return view('maintenance.update', ['workOrder' => $workOrder]);
     }
 
-    public function update(Request $request, WorkOrder $order): RedirectResponse
+    public function update(UpdateWorkOrderRequest $request, WorkOrder $order): RedirectResponse
     {
-        $this->ensureAssigned($request, $order);
+        $this->authorize('update', $order);
 
         $statusMap = [
             'resolved' => 'completed',
@@ -84,12 +85,7 @@ class MaintenancePortalController extends Controller
             'urgent' => 'urgent',
         ];
 
-        $validated = $request->validate([
-            'status' => ['required', 'string'],
-            'remarks' => ['required', 'string', 'max:5000'],
-            'completion_photo' => ['nullable', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
-            'completion_proof' => ['nullable', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
-        ]);
+        $validated = $request->validated();
 
         $status = $statusMap[$validated['status']] ?? $validated['status'];
         abort_unless(in_array($status, ['todo', 'in_progress', 'completed', 'urgent'], true), 422);
@@ -217,6 +213,6 @@ class MaintenancePortalController extends Controller
 
     private function ensureAssigned(Request $request, WorkOrder $order): void
     {
-        abort_unless($order->assigned_to === $request->user()->id, 403);
+        $this->authorize('view', $order);
     }
 }

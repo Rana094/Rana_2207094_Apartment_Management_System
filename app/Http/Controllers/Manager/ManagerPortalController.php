@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Manager\StoreBillRequest;
 use App\Models\Bill;
 use App\Models\Building;
 use App\Models\Complaint;
@@ -122,15 +123,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
-    public function storeBill(Request $request): RedirectResponse
+    public function storeBill(StoreBillRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'target_flat_id' => ['nullable', 'exists:flats,id'],
-            'category' => ['required', 'string', 'max:100'],
-            'period' => ['required', 'date_format:Y-m'],
-            'due_date' => ['required', 'date'],
-            'amount' => ['required', 'numeric', 'min:0'],
-        ]);
+        $validated = $request->validated();
 
         $query = ResidentProfile::with('user')
             ->whereHas('user', fn ($q) => $q->where('status', 'approved'));
@@ -189,6 +184,8 @@ class ManagerPortalController extends Controller
 
     public function verifyPayment(Request $request, PaymentProof $paymentProof): RedirectResponse
     {
+        $this->authorize('verify', $paymentProof);
+
         $status = $request->input('status', 'approved');
         abort_unless(in_array($status, ['approved', 'rejected'], true), 422);
 
@@ -243,6 +240,8 @@ class ManagerPortalController extends Controller
 
     public function storeWorkOrder(Request $request, Complaint $complaint): RedirectResponse
     {
+        $this->authorize('assign', $complaint);
+
         $validated = $request->validate([
             'technician_id' => ['required', 'exists:users,id'],
             'urgency' => ['required', Rule::in(['low', 'medium', 'high', 'urgent', 'emergency'])],
@@ -325,6 +324,8 @@ class ManagerPortalController extends Controller
 
     public function updateBooking(Request $request, FacilityBooking $booking): RedirectResponse
     {
+        $this->authorize('updateStatus', $booking);
+
         $status = $request->input('status', 'approved');
         abort_unless(in_array($status, ['approved', 'rejected'], true), 422);
 

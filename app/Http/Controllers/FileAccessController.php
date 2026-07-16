@@ -14,12 +14,7 @@ class FileAccessController extends Controller
 {
     public function document(Request $request, Document $document): StreamedResponse
     {
-        $user = $request->user();
-
-        abort_unless(
-            $user->role === 'manager' || $document->user_id === $user->id,
-            403
-        );
+        $this->authorize('view', $document);
 
         return $this->download($document->file_path, $document->title);
     }
@@ -40,12 +35,7 @@ class FileAccessController extends Controller
 
     public function paymentProof(Request $request, PaymentProof $paymentProof): StreamedResponse
     {
-        $user = $request->user();
-
-        abort_unless(
-            $user->role === 'manager' || $paymentProof->user_id === $user->id,
-            403
-        );
+        $this->authorize('view', $paymentProof);
 
         return $this->download($paymentProof->file_path, 'payment-proof-'.$paymentProof->id);
     }
@@ -55,12 +45,7 @@ class FileAccessController extends Controller
         $user = $request->user();
         $workOrder = $note->workOrder()->with('complaint')->firstOrFail();
 
-        abort_unless(
-            $user->role === 'manager'
-                || $workOrder->assigned_to === $user->id
-                || $workOrder->complaint?->resident_id === $user->id,
-            403
-        );
+        $this->authorize('view', $workOrder);
 
         abort_unless($note->proof_path, 404);
 
@@ -69,8 +54,10 @@ class FileAccessController extends Controller
 
     private function download(string $path, string $name): StreamedResponse
     {
-        abort_unless(Storage::disk('private_uploads')->exists($path), 404);
+        $disk = Storage::disk('private_uploads');
 
-        return Storage::disk('private_uploads')->download($path, $name);
+        abort_unless($disk->exists($path), 404);
+
+        return response()->download($disk->path($path), $name);
     }
 }

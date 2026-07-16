@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Resident\StoreComplaintRequest;
+use App\Http\Requests\Resident\StorePaymentProofRequest;
 use App\Models\Bill;
 use App\Models\Complaint;
 use App\Models\Document;
@@ -81,20 +83,11 @@ class ResidentPortalController extends Controller
         return view('resident.bills.upload', ['bill' => $billModel]);
     }
 
-    public function storePaymentProof(Request $request, Bill $bill): RedirectResponse
+    public function storePaymentProof(StorePaymentProofRequest $request, Bill $bill): RedirectResponse
     {
-        $this->ensureOwnsBill($request, $bill);
+        $this->authorize('uploadPaymentProof', $bill);
 
-        if ($request->filled('transaction_id') && ! $request->filled('transaction_reference')) {
-            $request->merge(['transaction_reference' => $request->input('transaction_id')]);
-        }
-
-        $validated = $request->validate([
-            'amount' => ['nullable', 'numeric', 'min:0'],
-            'transaction_reference' => ['nullable', 'string', 'max:255'],
-            'payment_proof' => ['required_without:receipt_file', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
-            'receipt_file' => ['required_without:payment_proof', 'file', 'mimes:'.FileUploadService::IMAGE_OR_PDF_MIMES, 'max:'.FileUploadService::MAX_PROOF_KB],
-        ]);
+        $validated = $request->validated();
 
         $path = app(FileUploadService::class)->store(
             $request->file('payment_proof') ?? $request->file('receipt_file'),
@@ -136,19 +129,9 @@ class ResidentPortalController extends Controller
         return view('resident.complaints.create');
     }
 
-    public function storeComplaint(Request $request): RedirectResponse
+    public function storeComplaint(StoreComplaintRequest $request): RedirectResponse
     {
-        if ($request->filled('urgency') && ! $request->filled('priority')) {
-            $request->merge(['priority' => $request->input('urgency')]);
-        }
-
-        $validated = $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:100'],
-            'description' => ['required', 'string', 'max:5000'],
-            'priority' => ['required', Rule::in(['low', 'medium', 'high', 'emergency'])],
-            'location' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
 
         $complaint = Complaint::create([
             'resident_id' => $request->user()->id,
@@ -178,7 +161,7 @@ class ResidentPortalController extends Controller
         $complaintModel = Complaint::find($complaint);
 
         if ($complaintModel) {
-            abort_unless($complaintModel->resident_id === $request->user()->id, 403);
+            $this->authorize('view', $complaintModel);
             $complaintModel->load(['flat', 'workOrders.assignedStaff.staffProfile']);
         } elseif ($complaint !== '2033') {
             abort(404);
@@ -516,7 +499,7 @@ class ResidentPortalController extends Controller
 
     private function ensureOwnsBill(Request $request, Bill $bill): void
     {
-        abort_unless($bill->resident_id === $request->user()->id, 403);
+        $this->authorize('view', $bill);
     }
 
     private function resolveBillForDisplay(Request $request, string $bill): ?Bill
