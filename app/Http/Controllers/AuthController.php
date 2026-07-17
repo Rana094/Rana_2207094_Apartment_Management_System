@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\FileUploadService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
-use App\Services\FileUploadService;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -81,12 +82,21 @@ class AuthController extends Controller
             'document_path' => $documentPath,
         ]);
 
-        event(new Registered($user));
+        $verificationEmailSent = true;
+
+        try {
+            event(new Registered($user));
+        } catch (Throwable $exception) {
+            report($exception);
+            $verificationEmailSent = false;
+        }
 
         Auth::login($user);
 
         return redirect()->route('approval.pending')
-            ->with('status', 'Registration submitted. Please verify your email, then wait for manager approval.');
+            ->with('status', $verificationEmailSent
+                ? 'Registration submitted. Please verify your email, then wait for manager approval.'
+                : 'Registration submitted, but the verification email could not be sent. Please use Resend Verification Email shortly.');
     }
 
     public function logout(Request $request): RedirectResponse

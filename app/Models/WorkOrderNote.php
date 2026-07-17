@@ -5,7 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $work_order_id
+ * @property int|null $user_id
+ * @property string|null $status
+ * @property string $remarks
+ * @property string|null $proof_path
+ * @property Carbon $noted_at
+ */
 class WorkOrderNote extends Model
 {
     use HasFactory;

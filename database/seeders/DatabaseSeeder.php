@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Building;
 use App\Models\Bill;
+use App\Models\Building;
 use App\Models\Complaint;
-use App\Models\Document;
 use App\Models\EmergencyRequest;
 use App\Models\Facility;
 use App\Models\FacilityBooking;
@@ -13,8 +12,6 @@ use App\Models\Flat;
 use App\Models\FlatMember;
 use App\Models\MoveOutRequest;
 use App\Models\Notice;
-use App\Models\Poll;
-use App\Models\PollOption;
 use App\Models\ResidentProfile;
 use App\Models\SecurityIncident;
 use App\Models\StaffProfile;
@@ -36,11 +33,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $manager = $this->seedUser('Building Manager', 'manager@nestora.com', 'manager', 'approved');
-        $security = $this->seedUser('Security Guard', 'security@nestora.com', 'security', 'approved');
-        $maintenance = $this->seedUser('Maintenance Staff', 'staff@nestora.com', 'staff', 'approved');
-        $resident = $this->seedUser('Approved Resident', 'resident@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 1A');
-        $tenant = $this->seedUser('Pending Resident', 'pending@nestora.com', 'resident', 'pending_approval', 'tenant', 'Building A, Flat 2B');
+        $manager = $this->seedUser('rana', 'manager@nestora.com', 'manager', 'approved');
+        $security = $this->seedUser('ruhan', 'security@nestora.com', 'security', 'approved');
+        $maintenance = $this->seedUser('bipro', 'staff@nestora.com', 'staff', 'approved');
+        $resident = $this->seedUser('ullas', 'resident@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 1A');
+        $tenant = $this->seedUser('avash', 'pending@nestora.com', 'resident', 'pending_approval', 'tenant', 'Building A, Flat 2B');
 
         $building = Building::updateOrCreate(
             ['code' => 'NEST-A'],
@@ -94,7 +91,7 @@ class DatabaseSeeder extends Seeder
                 'flat_id' => $flatOne->id,
                 'resident_type' => 'owner',
                 'move_in_date' => now()->subYears(2)->toDateString(),
-                'emergency_contact_name' => 'Ayesha Rahman',
+                'emergency_contact_name' => 'alok',
                 'emergency_contact_phone' => '+880 1711 223344',
                 'status' => 'active',
             ]
@@ -106,14 +103,14 @@ class DatabaseSeeder extends Seeder
                 'flat_id' => $flatTwo->id,
                 'resident_type' => 'tenant',
                 'move_in_date' => now()->subMonths(3)->toDateString(),
-                'emergency_contact_name' => 'Karim Uddin',
+                'emergency_contact_name' => 'issac',
                 'emergency_contact_phone' => '+880 1711 556677',
                 'status' => 'pending',
             ]
         );
 
         FlatMember::updateOrCreate(
-            ['resident_profile_id' => $residentProfile->id, 'name' => 'Ayesha Rahman'],
+            ['resident_profile_id' => $residentProfile->id, 'name' => 'alok'],
             ['relationship' => 'Spouse', 'phone' => '+880 1711 223344']
         );
 
@@ -126,20 +123,6 @@ class DatabaseSeeder extends Seeder
                 'model' => 'Corolla',
                 'parking_slot' => 'A-12',
                 'status' => 'active',
-            ]
-        );
-
-        Document::updateOrCreate(
-            ['user_id' => $resident->id, 'title' => 'Sample National ID'],
-            [
-                'flat_id' => $flatOne->id,
-                'type' => 'national_id',
-                'file_path' => 'resident-documents/sample-national-id.pdf',
-                'mime_type' => 'application/pdf',
-                'file_size' => 245760,
-                'status' => 'approved',
-                'verified_at' => now(),
-                'verified_by' => $manager->id,
             ]
         );
 
@@ -282,7 +265,7 @@ class DatabaseSeeder extends Seeder
             [
                 'description' => 'Resident fitness facility.',
                 'capacity' => 20,
-                'booking_fee' => 0,
+                'booking_fee' => 1000,
                 'status' => 'available',
             ]
         );
@@ -317,29 +300,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $poll = Poll::updateOrCreate(
-            ['title' => 'Install rooftop solar panels?'],
-            [
-                'description' => 'Vote on using service funds for rooftop solar panels powering common lobby lights.',
-                'status' => 'active',
-                'starts_at' => now()->subDay(),
-                'ends_at' => now()->addDays(10),
-            ]
-        );
-
-        foreach (['Yes, approve installation', 'No, keep current setup', 'Abstain'] as $label) {
-            PollOption::updateOrCreate(
-                ['poll_id' => $poll->id, 'label' => $label],
-                []
-            );
-        }
-
         EmergencyRequest::updateOrCreate(
-            ['resident_id' => $resident->id, 'type' => 'maintenance', 'created_at' => now()->subDays(3)],
+            ['resident_id' => $resident->id, 'type' => 'maintenance', 'message' => 'Elevator stopped briefly near floor one.'],
             [
                 'flat_id' => $flatOne->id,
-                'message' => 'Elevator stopped briefly near floor one.',
                 'status' => 'resolved',
+                'created_at' => now()->subDays(3),
                 'resolved_at' => now()->subDays(2),
             ]
         );

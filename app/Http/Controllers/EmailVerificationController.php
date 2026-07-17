@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Throwable;
 
 class EmailVerificationController extends Controller
 {
@@ -32,7 +33,15 @@ class EmailVerificationController extends Controller
             return redirect()->route('approval.pending');
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors([
+                'email' => 'The verification email could not be sent. Please try again shortly.',
+            ]);
+        }
 
         return back()->with('status', 'Verification email sent.');
     }

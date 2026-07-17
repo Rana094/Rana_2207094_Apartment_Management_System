@@ -6,7 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $complaint_id
+ * @property int|null $assigned_to
+ * @property int|null $assigned_by
+ * @property string $title
+ * @property string|null $instructions
+ * @property string $priority
+ * @property string $status
+ * @property Carbon|null $due_at
+ * @property Carbon|null $completed_at
+ */
 class WorkOrder extends Model
 {
     use HasFactory;
