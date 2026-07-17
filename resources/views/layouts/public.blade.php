@@ -14,6 +14,7 @@
 
     <!-- Custom Vanilla CSS Design System -->
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @stack('head')
 </head>
 <body>
     @php
@@ -162,5 +163,6 @@
             }
         });
     </script>
+    @stack('scripts')
 </body>
 </html>

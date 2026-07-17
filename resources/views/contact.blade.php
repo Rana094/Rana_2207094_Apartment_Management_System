@@ -89,6 +89,20 @@
         color: var(--text-secondary);
         margin-bottom: 2rem;
     }
+    .map-panel {
+        background: #ffffff;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        margin-top: 2rem;
+        overflow: hidden;
+    }
+    .map-panel img {
+        display: block;
+        height: 360px;
+        object-fit: cover;
+        width: 100%;
+    }
 </style>
 
 <section class="section-padding" style="background-color: var(--bg-main);">
@@ -188,6 +202,10 @@
                     </div>
                 </form>
             </div>
+        </div>
+
+        <div class="map-panel">
+            <img src="{{ route('contact.map') }}" alt="Nestora apartment location map">
         </div>
     </div>
 </section>

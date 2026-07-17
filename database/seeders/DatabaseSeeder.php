@@ -263,9 +263,9 @@ class DatabaseSeeder extends Seeder
         $gym = Facility::updateOrCreate(
             ['name' => 'Gym'],
             [
-                'description' => 'Resident fitness facility.',
+                'description' => 'Monthly resident fitness subscription.',
                 'capacity' => 20,
-                'booking_fee' => 1000,
+                'booking_fee' => 3000,
                 'status' => 'available',
             ]
         );

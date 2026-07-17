@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Resident;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Requests\Resident\StoreComplaintRequest;
 use App\Http\Requests\Resident\StorePaymentProofRequest;
 use App\Models\Bill;
@@ -91,7 +92,7 @@ class ResidentPortalController extends Controller
     public function bills(Request $request): View
     {
         return view('resident.bills.index', [
-            'bills' => $request->user()->bills()->with('paymentProofs')->latest('due_date')->paginate(10),
+            'bills' => $request->user()->bills()->with(['paymentProofs', 'latestPaymentTransaction'])->latest('due_date')->paginate(10),
         ]);
     }
 
@@ -101,6 +102,7 @@ class ResidentPortalController extends Controller
 
         return view('resident.bills.show', [
             'bill' => $billModel?->load(['flat.building', 'paymentProofs']),
+            'paymentTransaction' => $billModel ? PaymentGatewayController::sessionForBill($billModel) : null,
         ]);
     }
 
@@ -301,7 +303,10 @@ class ResidentPortalController extends Controller
     public function createBooking(): View
     {
         return view('resident.bookings.create', [
-            'facilities' => Facility::where('status', 'available')->orderBy('name')->get(),
+            'facilities' => Facility::where('status', 'available')
+                ->whereIn('name', ['Community Hall', 'Rooftop BBQ Grill Station', 'Gym'])
+                ->orderByRaw("FIELD(name, 'Community Hall', 'Rooftop BBQ Grill Station', 'Gym')")
+                ->get(),
         ]);
     }
 
@@ -334,6 +339,16 @@ class ResidentPortalController extends Controller
             };
 
             $request->merge(['start_time' => $start, 'end_time' => $end]);
+        }
+
+        $selectedFacility = $request->attributes->get('selectedFacility');
+        if ($selectedFacility?->name === 'Gym') {
+            $request->merge([
+                'booking_date' => $request->input('booking_date', today()->toDateString()),
+                'start_time' => '00:00',
+                'end_time' => '23:59',
+                'purpose' => $request->input('purpose', 'Monthly gym subscription request'),
+            ]);
         }
 
         $validated = $request->validate([
