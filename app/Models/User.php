@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\BrevoVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $phone
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $approved_at
+ * @property int|null $approved_by
+ * @property string|null $rejection_reason
+ * @property string $password
+ * @property string $role
+ * @property string $status
+ * @property string|null $resident_type
+ * @property string|null $flat_info
+ * @property string|null $document_path
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
@@ -65,6 +83,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'resident';
     }
 
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new BrevoVerifyEmail);
+    }
+
     public function isApproved(): bool
     {
         return $this->status === 'approved' && $this->approved_at !== null;
@@ -118,11 +141,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function facilityBookings(): HasMany
     {
         return $this->hasMany(FacilityBooking::class, 'resident_id');
-    }
-
-    public function pollVotes(): HasMany
-    {
-        return $this->hasMany(PollVote::class);
     }
 
     public function emergencyRequests(): HasMany

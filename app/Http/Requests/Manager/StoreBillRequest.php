@@ -14,7 +14,8 @@ class StoreBillRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'target_flat_id' => ['nullable', 'exists:flats,id'],
+            'bulk_billing' => ['nullable', 'boolean'],
+            'target_flat_id' => ['nullable', 'required_unless:bulk_billing,1', 'exists:flats,id'],
             'category' => ['required', 'string', 'max:100'],
             'period' => ['required', 'date_format:Y-m'],
             'due_date' => ['required', 'date'],

@@ -7,25 +7,26 @@ use App\Http\Requests\Manager\StoreBillRequest;
 use App\Models\Bill;
 use App\Models\Building;
 use App\Models\Complaint;
+use App\Models\Document;
 use App\Models\EmergencyRequest;
 use App\Models\FacilityBooking;
 use App\Models\Flat;
 use App\Models\Notice;
 use App\Models\PaymentProof;
-use App\Models\Poll;
-use App\Models\PollOption;
 use App\Models\ResidentProfile;
 use App\Models\StaffProfile;
 use App\Models\User;
+use App\Models\VisitorRequest;
 use App\Models\WorkOrder;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
-use App\Services\NotificationService;
 
 class ManagerPortalController extends Controller
 {
@@ -39,9 +40,25 @@ class ManagerPortalController extends Controller
                 'pending_approvals' => User::where('role', 'resident')->whereIn('status', ['pending_verification', 'pending_approval'])->count(),
                 'unpaid_bills' => Bill::whereIn('status', ['unpaid', 'overdue'])->count(),
                 'open_complaints' => Complaint::whereIn('status', ['open', 'in_progress'])->count(),
-                'today_visitors' => \App\Models\VisitorRequest::whereDate('visit_date', today())->count(),
+                'today_visitors' => VisitorRequest::whereDate('visit_date', today())->count(),
                 'revenue' => Bill::where('status', 'paid')->sum('amount'),
             ],
+            'pendingResidents' => User::where('role', 'resident')
+                ->whereIn('status', ['pending_verification', 'pending_approval'])
+                ->latest()
+                ->limit(5)
+                ->get(),
+            'urgentComplaints' => Complaint::with(['resident', 'flat'])
+                ->whereIn('status', ['open', 'in_progress'])
+                ->whereIn('priority', ['high', 'urgent', 'emergency'])
+                ->latest()
+                ->limit(5)
+                ->get(),
+            'activeEmergencies' => EmergencyRequest::with(['resident', 'flat'])
+                ->whereIn('status', ['open', 'in_progress'])
+                ->latest()
+                ->limit(5)
+                ->get(),
         ]);
     }
 
@@ -59,13 +76,62 @@ class ManagerPortalController extends Controller
     {
         $residentModel = User::with(['residentProfile.flat.building', 'documents', 'bills', 'complaints'])
             ->where('role', 'resident')
-            ->find($resident);
+            ->findOrFail($resident);
 
-        if (! $residentModel && $resident !== '1') {
-            abort(404);
-        }
+        $residentModel->load(['residentProfile.flatMembers', 'residentProfile.vehicleRegistrations']);
 
         return view('manager.residents.show', ['resident' => $residentModel]);
+    }
+
+    public function documents(): View
+    {
+        $registrationDocuments = User::query()
+            ->where('role', 'resident')
+            ->whereNotNull('document_path')
+            ->latest()
+            ->paginate(15, ['*'], 'registrations_page');
+
+        $registrationDocuments->getCollection()->each(function (User $resident) {
+            $resident->file_available = Storage::disk('private_uploads')->exists($resident->document_path);
+        });
+
+        $residentDocuments = Document::with(['user', 'flat.building'])
+            ->latest()
+            ->paginate(15, ['*'], 'documents_page');
+
+        $residentDocuments->getCollection()->each(function (Document $document) {
+            $document->file_available = Storage::disk('private_uploads')->exists($document->file_path);
+        });
+
+        return view('manager.documents.index', [
+            'registrationDocuments' => $registrationDocuments,
+            'residentDocuments' => $residentDocuments,
+        ]);
+    }
+
+    public function updateResidentStatus(Request $request, User $resident): RedirectResponse
+    {
+        abort_unless($resident->role === 'resident', 404);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['approved', 'suspended'])],
+        ]);
+
+        abort_if($validated['status'] === 'approved' && ! $resident->hasVerifiedEmail(), 422, 'The resident must verify their email before reactivation.');
+
+        $resident->update([
+            'status' => $validated['status'],
+            'approved_at' => $validated['status'] === 'approved' ? ($resident->approved_at ?? now()) : $resident->approved_at,
+        ]);
+
+        $this->notify(
+            $resident->id,
+            'resident_status_updated',
+            'Account '.$validated['status'],
+            'Your Nestora resident account has been '.$validated['status'].'.'
+        );
+
+        return redirect()->route('manager.residents.index')->with('status', 'Resident account '.$validated['status'].'.');
     }
 
     public function flats(): View
@@ -85,26 +151,17 @@ class ManagerPortalController extends Controller
     public function storeFlat(Request $request): RedirectResponse
     {
         $data = $this->validateFlat($request);
-        $building = Building::firstOrCreate(
-            ['code' => $request->input('building_code', 'NEST-A')],
-            ['name' => $request->input('building_name', 'Nestora Heights - Building A'), 'floors' => 1]
-        );
-
-        Flat::create($data + ['building_id' => $building->id]);
+        Flat::create($data);
 
         return redirect()->route('manager.flats.index')->with('status', 'Flat created.');
     }
 
-    public function editFlat(string $flat): View
+    public function editFlat(Flat $flat): View
     {
-        $flatModel = Flat::with('building')->find($flat);
-
-        if (! $flatModel && $flat !== '1') {
-            abort(404);
-        }
+        $flat->load('building');
 
         return view('manager.flats.form', [
-            'flat' => $flatModel ?? ['block' => 'A', 'occupancy' => 'owner'],
+            'flat' => $flat,
             'buildings' => Building::orderBy('name')->get(),
         ]);
     }
@@ -160,7 +217,7 @@ class ManagerPortalController extends Controller
     public function bills(): View
     {
         return view('manager.bills.index', [
-            'bills' => Bill::with(['resident', 'flat'])->latest('due_date')->paginate(20),
+            'bills' => Bill::with(['resident', 'flat', 'paymentProofs'])->latest('due_date')->paginate(20),
         ]);
     }
 
@@ -171,15 +228,11 @@ class ManagerPortalController extends Controller
         ]);
     }
 
-    public function payment(string $payment): View
+    public function payment(PaymentProof $payment): View
     {
-        $paymentProof = PaymentProof::with(['bill.resident', 'user'])->find($payment);
+        $payment->load(['bill.resident', 'user']);
 
-        if (! $paymentProof && $payment !== '1') {
-            abort(404);
-        }
-
-        return view('manager.payments.show', ['paymentProof' => $paymentProof]);
+        return view('manager.payments.show', ['paymentProof' => $payment]);
     }
 
     public function verifyPayment(Request $request, PaymentProof $paymentProof): RedirectResponse
@@ -214,6 +267,16 @@ class ManagerPortalController extends Controller
                 'total_unpaid' => Bill::whereIn('status', ['unpaid', 'overdue', 'pending_verification'])->sum('amount'),
                 'pending_payment_proofs' => PaymentProof::where('status', 'pending')->count(),
             ],
+            'billingBreakdown' => Bill::query()
+                ->selectRaw('type, SUM(amount) as invoiced, SUM(CASE WHEN status = ? THEN amount ELSE 0 END) as collected', ['paid'])
+                ->groupBy('type')
+                ->orderBy('type')
+                ->get(),
+            'recentPayments' => PaymentProof::with(['bill.flat', 'user'])
+                ->where('status', 'approved')
+                ->latest('verified_at')
+                ->limit(10)
+                ->get(),
         ]);
     }
 
@@ -224,16 +287,12 @@ class ManagerPortalController extends Controller
         ]);
     }
 
-    public function assignComplaint(string $complaint): View
+    public function assignComplaint(Complaint $complaint): View
     {
-        $complaintModel = Complaint::with(['resident', 'flat'])->find($complaint);
-
-        if (! $complaintModel && $complaint !== '2033') {
-            abort(404);
-        }
+        $complaint->load(['resident', 'flat']);
 
         return view('manager.complaints.assign', [
-            'complaint' => $complaintModel,
+            'complaint' => $complaint,
             'staff' => User::with('staffProfile')->whereIn('role', ['staff'])->where('status', 'approved')->get(),
         ]);
     }
@@ -243,7 +302,12 @@ class ManagerPortalController extends Controller
         $this->authorize('assign', $complaint);
 
         $validated = $request->validate([
-            'technician_id' => ['required', 'exists:users,id'],
+            'technician_id' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($query) => $query
+                    ->where('role', 'staff')
+                    ->where('status', 'approved')),
+            ],
             'urgency' => ['required', Rule::in(['low', 'medium', 'high', 'urgent', 'emergency'])],
             'deadline' => ['nullable', 'date'],
             'instructions' => ['nullable', 'string', 'max:2000'],
@@ -315,6 +379,15 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.staff')->with('status', 'Staff member created.');
     }
 
+    public function destroyStaff(User $staff): RedirectResponse
+    {
+        abort_unless(in_array($staff->role, ['staff', 'security'], true), 404);
+
+        $staff->delete();
+
+        return redirect()->route('manager.staff')->with('status', 'Staff member removed.');
+    }
+
     public function bookings(): View
     {
         return view('manager.bookings', [
@@ -333,45 +406,6 @@ class ManagerPortalController extends Controller
         $this->notify($booking->resident_id, 'facility_booking_'.$status, 'Facility booking '.$status, 'Your facility booking has been '.$status.'.');
 
         return redirect()->route('manager.bookings.index')->with('status', 'Booking '.$status.'.');
-    }
-
-    public function polls(): View
-    {
-        return view('manager.polls', [
-            'polls' => Poll::with(['options.votes', 'votes'])->latest()->get(),
-        ]);
-    }
-
-    public function storePoll(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'question' => ['required', 'string', 'max:1000'],
-            'closes_at' => ['required', 'date', 'after:today'],
-            'options' => ['nullable', 'array'],
-            'options.*' => ['string', 'max:255'],
-        ]);
-
-        $poll = Poll::create([
-            'title' => $validated['question'],
-            'description' => $request->input('description'),
-            'status' => 'active',
-            'starts_at' => now(),
-            'ends_at' => $validated['closes_at'],
-        ]);
-
-        foreach (($validated['options'] ?? ['Yes', 'No', 'Abstain']) as $label) {
-            PollOption::create(['poll_id' => $poll->id, 'label' => $label]);
-        }
-
-        app(NotificationService::class)->toRole(
-            'resident',
-            'poll_created',
-            'New poll available',
-            $poll->title,
-            route('resident.polls', absolute: false)
-        );
-
-        return redirect()->route('manager.polls')->with('status', 'Poll created.');
     }
 
     public function emergencies(): View
@@ -427,9 +461,17 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.notices.index')->with('status', 'Notice published.');
     }
 
+    public function destroyNotice(Notice $notice): RedirectResponse
+    {
+        $notice->delete();
+
+        return redirect()->route('manager.notices.index')->with('status', 'Notice deleted.');
+    }
+
     private function validateFlat(Request $request): array
     {
         $validated = $request->validate([
+            'building_id' => ['required', 'exists:buildings,id'],
             'number' => ['required', 'string', 'max:100'],
             'block' => ['nullable', 'string', 'max:50'],
             'floor' => ['nullable', 'integer', 'min:0'],
@@ -439,6 +481,7 @@ class ManagerPortalController extends Controller
         ]);
 
         return [
+            'building_id' => $validated['building_id'],
             'flat_number' => $validated['number'],
             'block' => $validated['block'] ?? null,
             'floor' => $validated['floor'] ?? null,

@@ -7,6 +7,7 @@ use App\Http\Requests\Resident\StoreComplaintRequest;
 use App\Http\Requests\Resident\StorePaymentProofRequest;
 use App\Models\Bill;
 use App\Models\Complaint;
+use App\Models\ComplaintMessage;
 use App\Models\Document;
 use App\Models\EmergencyRequest;
 use App\Models\Facility;
@@ -14,10 +15,10 @@ use App\Models\FacilityBooking;
 use App\Models\MoveOutRequest;
 use App\Models\Notice;
 use App\Models\PaymentProof;
-use App\Models\Poll;
-use App\Models\PollOption;
-use App\Models\PollVote;
+use App\Models\VehicleRegistration;
 use App\Models\VisitorRequest;
+use App\Services\FileUploadService;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -25,8 +26,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
-use App\Services\NotificationService;
-use App\Services\FileUploadService;
 
 class ResidentPortalController extends Controller
 {
@@ -58,6 +57,35 @@ class ResidentPortalController extends Controller
             'vehicles' => $profile?->vehicleRegistrations ?? collect(),
             'documents' => $request->user()->documents()->latest()->get(),
         ]);
+    }
+
+    public function storeVehicle(Request $request): RedirectResponse
+    {
+        $profile = $this->residentProfile($request);
+        abort_unless($profile !== null, 422, 'Resident profile is required before adding a vehicle.');
+
+        $validated = $request->validate([
+            'vehicle_type' => ['required', Rule::in(['car', 'motorbike', 'bicycle', 'other'])],
+            'registration_number' => ['required', 'string', 'max:100', 'unique:vehicle_registrations,registration_number'],
+            'brand' => ['nullable', 'string', 'max:100'],
+            'model' => ['nullable', 'string', 'max:100'],
+            'parking_slot' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        VehicleRegistration::create($validated + [
+            'resident_profile_id' => $profile->id,
+            'status' => 'pending',
+        ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'vehicle_registration_requested',
+            'Vehicle registration requested',
+            $request->user()->name.' added vehicle '.$validated['registration_number'].'.',
+            route('manager.residents.show', $request->user(), absolute: false)
+        );
+
+        return redirect()->route('resident.flat')->with('status', 'Vehicle registration submitted for review.');
     }
 
     public function bills(Request $request): View
@@ -162,7 +190,7 @@ class ResidentPortalController extends Controller
 
         if ($complaintModel) {
             $this->authorize('view', $complaintModel);
-            $complaintModel->load(['flat', 'workOrders.assignedStaff.staffProfile']);
+            $complaintModel->load(['flat', 'workOrders.assignedStaff.staffProfile', 'messages.user']);
         } elseif ($complaint !== '2033') {
             abort(404);
         }
@@ -170,6 +198,31 @@ class ResidentPortalController extends Controller
         return view('resident.complaints.show', [
             'complaint' => $complaintModel,
         ]);
+    }
+
+    public function storeComplaintMessage(Request $request, Complaint $complaint): RedirectResponse
+    {
+        $this->authorize('view', $complaint);
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
+
+        ComplaintMessage::create([
+            'complaint_id' => $complaint->id,
+            'user_id' => $request->user()->id,
+            'message' => $validated['message'],
+        ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'complaint_message_created',
+            'New complaint reply',
+            $request->user()->name.' replied to complaint #'.$complaint->id.'.',
+            route('manager.complaints.assign', $complaint, absolute: false)
+        );
+
+        return redirect()->route('resident.complaints.show', $complaint)->with('status', 'Reply posted.');
     }
 
     public function visitors(Request $request): View
@@ -217,6 +270,24 @@ class ResidentPortalController extends Controller
         );
 
         return redirect()->route('resident.visitors.index')->with('status', 'Visitor request created.');
+    }
+
+    public function cancelVisitor(Request $request, VisitorRequest $visitor): RedirectResponse
+    {
+        $this->authorize('view', $visitor);
+        abort_if($visitor->checked_in_at !== null, 422, 'Checked-in visitors cannot be cancelled.');
+
+        $visitor->update(['status' => 'cancelled']);
+
+        app(NotificationService::class)->toRole(
+            'security',
+            'visitor_request_cancelled',
+            'Visitor pass cancelled',
+            $request->user()->name.' cancelled pass '.$visitor->access_code.'.',
+            route('security.checkin', absolute: false)
+        );
+
+        return redirect()->route('resident.visitors.index')->with('status', 'Visitor pass cancelled.');
     }
 
     public function bookings(Request $request): View
@@ -287,30 +358,6 @@ class ResidentPortalController extends Controller
         );
 
         return redirect()->route('resident.bookings.index')->with('status', 'Facility booking request submitted.');
-    }
-
-    public function polls(Request $request): View
-    {
-        return view('resident.polls', [
-            'polls' => Poll::with(['options.votes', 'votes'])->latest()->get(),
-            'myVotes' => $request->user()->pollVotes()->pluck('poll_option_id', 'poll_id'),
-        ]);
-    }
-
-    public function vote(Request $request, Poll $poll): RedirectResponse
-    {
-        $validated = $request->validate([
-            'poll_option_id' => ['required', 'exists:poll_options,id'],
-        ]);
-
-        $option = PollOption::where('poll_id', $poll->id)->findOrFail($validated['poll_option_id']);
-
-        PollVote::updateOrCreate(
-            ['poll_id' => $poll->id, 'user_id' => $request->user()->id],
-            ['poll_option_id' => $option->id]
-        );
-
-        return redirect()->route('resident.polls')->with('status', 'Your vote has been recorded.');
     }
 
     public function emergency(Request $request): View
@@ -392,7 +439,7 @@ class ResidentPortalController extends Controller
             'document_uploaded',
             'Resident document uploaded',
             $request->user()->name.' uploaded '.$document->title.' for verification.',
-            route('manager.residents.index', absolute: false)
+            route('manager.documents.index', absolute: false)
         );
 
         return redirect()->route('resident.documents')->with('status', 'Document uploaded for verification.');

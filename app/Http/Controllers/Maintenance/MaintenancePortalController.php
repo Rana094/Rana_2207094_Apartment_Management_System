@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\UpdateWorkOrderRequest;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderNote;
+use App\Services\FileUploadService;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
-use App\Services\NotificationService;
-use App\Services\FileUploadService;
 
 class MaintenancePortalController extends Controller
 {
@@ -39,6 +39,7 @@ class MaintenancePortalController extends Controller
     {
         return view('maintenance.dashboard', [
             'workOrders' => $this->assignedOrders($request)->with(['complaint.flat', 'complaint.resident'])->latest()->paginate(15),
+            'stats' => $this->staffStats($request),
             'filter' => 'all',
         ]);
     }
@@ -47,6 +48,7 @@ class MaintenancePortalController extends Controller
     {
         return view('maintenance.dashboard', [
             'workOrders' => $this->assignedOrders($request)->where('status', 'in_progress')->with(['complaint.flat', 'complaint.resident'])->latest()->paginate(15),
+            'stats' => $this->staffStats($request),
             'filter' => 'in_progress',
         ]);
     }
@@ -192,6 +194,16 @@ class MaintenancePortalController extends Controller
     private function assignedOrders(Request $request)
     {
         return WorkOrder::query()->where('assigned_to', $request->user()->id);
+    }
+
+    private function staffStats(Request $request): array
+    {
+        return [
+            'todo' => $this->assignedOrders($request)->where('status', 'todo')->count(),
+            'in_progress' => $this->assignedOrders($request)->where('status', 'in_progress')->count(),
+            'completed' => $this->assignedOrders($request)->where('status', 'completed')->count(),
+            'urgent' => $this->assignedOrders($request)->whereIn('priority', ['high', 'emergency', 'urgent'])->count(),
+        ];
     }
 
     private function resolveOrderForDisplay(Request $request, string $order): ?WorkOrder

@@ -11,11 +11,11 @@ use App\Models\SecurityIncident;
 use App\Models\User;
 use App\Models\VisitorLog;
 use App\Models\VisitorRequest;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use App\Services\NotificationService;
 
 class SecurityPortalController extends Controller
 {
@@ -134,8 +134,29 @@ class SecurityPortalController extends Controller
     public function emergency(): View
     {
         return view('security.emergency', [
-            'emergencies' => EmergencyRequest::with(['resident', 'flat'])->latest()->paginate(20),
+            'emergencies' => EmergencyRequest::with(['resident', 'flat'])
+                ->orderByRaw("case when status in ('open', 'in_progress') then 0 else 1 end")
+                ->latest()
+                ->paginate(20),
         ]);
+    }
+
+    public function updateEmergency(EmergencyRequest $emergency): RedirectResponse
+    {
+        $emergency->update([
+            'status' => 'resolved',
+            'resolved_at' => now(),
+        ]);
+
+        app(NotificationService::class)->toRole(
+            'manager',
+            'security_emergency_resolved',
+            'Emergency alert resolved by security',
+            '#AL-'.$emergency->id.' was marked resolved by gate security.',
+            route('manager.emergencies.index', absolute: false)
+        );
+
+        return redirect()->route('security.emergency')->with('status', 'Emergency alert resolved.');
     }
 
     public function triggerEmergency(Request $request): RedirectResponse

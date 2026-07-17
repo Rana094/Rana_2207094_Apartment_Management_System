@@ -8,18 +8,18 @@ use App\Models\User;
 use App\Models\WorkOrderNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileAccessController extends Controller
 {
-    public function document(Request $request, Document $document): StreamedResponse
+    public function document(Request $request, Document $document): BinaryFileResponse
     {
         $this->authorize('view', $document);
 
         return $this->download($document->file_path, $document->title);
     }
 
-    public function residentSignupDocument(Request $request, User $resident): StreamedResponse
+    public function residentSignupDocument(Request $request, User $resident): BinaryFileResponse
     {
         $user = $request->user();
 
@@ -28,31 +28,33 @@ class FileAccessController extends Controller
             403
         );
 
-        abort_unless($resident->document_path, 404);
+        $documentPath = $resident->document_path;
+        abort_unless(is_string($documentPath) && $documentPath !== '', 404);
 
-        return $this->download($resident->document_path, $resident->name.' verification document');
+        return $this->download($documentPath, $resident->name.' verification document');
     }
 
-    public function paymentProof(Request $request, PaymentProof $paymentProof): StreamedResponse
+    public function paymentProof(Request $request, PaymentProof $paymentProof): BinaryFileResponse
     {
         $this->authorize('view', $paymentProof);
 
         return $this->download($paymentProof->file_path, 'payment-proof-'.$paymentProof->id);
     }
 
-    public function workOrderProof(Request $request, WorkOrderNote $note): StreamedResponse
+    public function workOrderProof(Request $request, WorkOrderNote $note): BinaryFileResponse
     {
         $user = $request->user();
         $workOrder = $note->workOrder()->with('complaint')->firstOrFail();
 
         $this->authorize('view', $workOrder);
 
-        abort_unless($note->proof_path, 404);
+        $proofPath = $note->proof_path;
+        abort_unless(is_string($proofPath) && $proofPath !== '', 404);
 
-        return $this->download($note->proof_path, 'work-order-proof-'.$note->id);
+        return $this->download($proofPath, 'work-order-proof-'.$note->id);
     }
 
-    private function download(string $path, string $name): StreamedResponse
+    private function download(string $path, string $name): BinaryFileResponse
     {
         $disk = Storage::disk('private_uploads');
 
