@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $resident_id
+ * @property int|null $flat_id
+ * @property string $title
+ * @property string|null $category
+ * @property string $description
+ * @property string $priority
+ * @property string $status
+ */
 class Complaint extends Model
 {
     use HasFactory;
@@ -26,5 +36,10 @@ class Complaint extends Model
     public function workOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class);
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(ComplaintMessage::class);
     }
 }

@@ -5,7 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $bill_id
+ * @property int $user_id
+ * @property string|null $amount
+ * @property string|null $transaction_reference
+ * @property string $file_path
+ * @property string $status
+ * @property Carbon|null $submitted_at
+ * @property Carbon|null $verified_at
+ * @property int|null $verified_by
+ */
 class PaymentProof extends Model
 {
     use HasFactory;
