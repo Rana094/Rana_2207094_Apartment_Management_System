@@ -60,18 +60,22 @@ class MaintenancePortalController extends Controller
 
     public function show(Request $request, string $order): View
     {
-        $workOrder = $this->resolveOrderForDisplay($request, $order);
+        $workOrder = $this->resolveAssignedOrder($request, $order);
 
         return view('maintenance.show', [
-            'workOrder' => $workOrder?->load(['complaint.flat.building', 'complaint.resident', 'notes.user']),
+            'workOrder' => $workOrder->load(['complaint.flat.building', 'complaint.resident', 'complaint.messages.user', 'notes.user']),
         ]);
     }
 
     public function edit(Request $request, string $order): View
     {
-        $workOrder = $this->resolveOrderForDisplay($request, $order);
+        $workOrder = $this->resolveAssignedOrder($request, $order);
 
-        return view('maintenance.update', ['workOrder' => $workOrder]);
+        abort_if($workOrder->status === 'completed', 404);
+
+        return view('maintenance.update', [
+            'workOrder' => $workOrder->load(['complaint.flat']),
+        ]);
     }
 
     public function update(UpdateWorkOrderRequest $request, WorkOrder $order): RedirectResponse
@@ -206,21 +210,13 @@ class MaintenancePortalController extends Controller
         ];
     }
 
-    private function resolveOrderForDisplay(Request $request, string $order): ?WorkOrder
+    private function resolveAssignedOrder(Request $request, string $order): WorkOrder
     {
-        $workOrder = WorkOrder::find($order);
+        $workOrder = WorkOrder::findOrFail($order);
 
-        if ($workOrder) {
-            $this->ensureAssigned($request, $workOrder);
+        $this->ensureAssigned($request, $workOrder);
 
-            return $workOrder;
-        }
-
-        if ($order === '2033') {
-            return null;
-        }
-
-        abort(404);
+        return $workOrder;
     }
 
     private function ensureAssigned(Request $request, WorkOrder $order): void

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WorkOrderNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileAccessController extends Controller
@@ -16,7 +17,12 @@ class FileAccessController extends Controller
     {
         $this->authorize('view', $document);
 
-        return $this->download($document->file_path, $document->title);
+        return $this->serve(
+            $document->file_path,
+            $document->title,
+            $document->mime_type,
+            $request->boolean('preview') && $document->isPreviewable()
+        );
     }
 
     public function residentSignupDocument(Request $request, User $resident): BinaryFileResponse
@@ -31,14 +37,14 @@ class FileAccessController extends Controller
         $documentPath = $resident->document_path;
         abort_unless(is_string($documentPath) && $documentPath !== '', 404);
 
-        return $this->download($documentPath, $resident->name.' verification document');
+        return $this->serve($documentPath, $resident->name.' verification document', inline: $request->boolean('preview'));
     }
 
     public function paymentProof(Request $request, PaymentProof $paymentProof): BinaryFileResponse
     {
         $this->authorize('view', $paymentProof);
 
-        return $this->download($paymentProof->file_path, 'payment-proof-'.$paymentProof->id);
+        return $this->serve($paymentProof->file_path, 'payment-proof-'.$paymentProof->id, $paymentProof->mime_type);
     }
 
     public function workOrderProof(Request $request, WorkOrderNote $note): BinaryFileResponse
@@ -51,15 +57,40 @@ class FileAccessController extends Controller
         $proofPath = $note->proof_path;
         abort_unless(is_string($proofPath) && $proofPath !== '', 404);
 
-        return $this->download($proofPath, 'work-order-proof-'.$note->id);
+        return $this->serve($proofPath, 'work-order-proof-'.$note->id);
     }
 
-    private function download(string $path, string $name): BinaryFileResponse
+    private function serve(string $path, string $name, ?string $mimeType = null, bool $inline = false): BinaryFileResponse
     {
         $disk = Storage::disk('private_uploads');
 
         abort_unless($disk->exists($path), 404);
 
-        return response()->download($disk->path($path), $name);
+        $absolutePath = $disk->path($path);
+        $fileName = $this->downloadName($name, $path);
+        $headers = array_filter([
+            'Content-Type' => $mimeType ?: $disk->mimeType($path),
+        ]);
+
+        if ($inline) {
+            $headers['Content-Disposition'] = 'inline; filename="'.$fileName.'"';
+
+            return response()->file($absolutePath, $headers);
+        }
+
+        return response()->download($absolutePath, $fileName, $headers);
+    }
+
+    private function downloadName(string $name, string $path): string
+    {
+        $fileName = trim(str_replace(['/', '\\', '"'], '-', $name));
+        $fileName = $fileName !== '' ? $fileName : 'document';
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+        if ($extension !== '' && Str::lower(pathinfo($fileName, PATHINFO_EXTENSION)) !== Str::lower($extension)) {
+            $fileName .= '.'.$extension;
+        }
+
+        return $fileName;
     }
 }

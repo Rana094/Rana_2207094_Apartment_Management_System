@@ -23,7 +23,7 @@ class LocationController extends Controller
             'height' => 360,
             'center' => "lonlat:$lon,$lat",
             'zoom' => 16,
-            'marker' => "lonlat:$lon,$lat;color:%230f766e;type:awesome;icon:building",
+            'marker' => "lonlat:$lon,$lat;color:#0f766e;type:awesome;icon:building",
             'apiKey' => $apiKey,
         ]);
 

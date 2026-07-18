@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use App\Notifications\BrevoVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,9 +25,10 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property string|null $resident_type
  * @property string|null $flat_info
+ * @property int|null $requested_flat_id
  * @property string|null $document_path
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -48,6 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'status',
         'resident_type',
         'flat_info',
+        'requested_flat_id',
         'document_path',
         'approved_at',
         'approved_by',
@@ -83,11 +84,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'resident';
     }
 
-    public function sendEmailVerificationNotification(): void
-    {
-        $this->notify(new BrevoVerifyEmail);
-    }
-
     public function isApproved(): bool
     {
         return $this->status === 'approved' && $this->approved_at !== null;
@@ -106,6 +102,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function residentProfile(): HasOne
     {
         return $this->hasOne(ResidentProfile::class);
+    }
+
+    public function requestedFlat(): BelongsTo
+    {
+        return $this->belongsTo(Flat::class, 'requested_flat_id');
     }
 
     public function staffProfile(): HasOne

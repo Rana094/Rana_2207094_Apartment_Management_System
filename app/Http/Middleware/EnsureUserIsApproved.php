@@ -12,7 +12,7 @@ class EnsureUserIsApproved
     {
         $user = $request->user();
 
-        if (! $user || ! $user->hasVerifiedEmail() || ! $user->isApproved()) {
+        if (! $user || ! $user->isApproved()) {
             return redirect()->route('approval.pending');
         }
 

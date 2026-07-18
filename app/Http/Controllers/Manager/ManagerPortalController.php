@@ -35,9 +35,13 @@ class ManagerPortalController extends Controller
     {
         return view('manager.dashboard', [
             'stats' => [
-                'residents' => User::where('role', 'resident')->count(),
+                'residents' => User::where('role', 'resident')->whereIn('status', ['approved', 'suspended'])->count(),
                 'occupied_flats' => Flat::where('status', 'occupied')->count(),
                 'vacant_flats' => Flat::where('status', 'vacant')->count(),
+                'available_flats' => Flat::availableForSignup()->count(),
+                'reserved_flats' => Flat::where('status', 'vacant')
+                    ->whereHas('pendingResidentRequests')
+                    ->count(),
                 'pending_approvals' => User::where('role', 'resident')->whereIn('status', ['pending_verification', 'pending_approval'])->count(),
                 'unpaid_bills' => Bill::whereIn('status', ['unpaid', 'overdue'])->count(),
                 'open_complaints' => Complaint::whereIn('status', ['open', 'in_progress'])->count(),
@@ -45,6 +49,7 @@ class ManagerPortalController extends Controller
                 'revenue' => Bill::where('status', 'paid')->sum('amount'),
             ],
             'pendingResidents' => User::where('role', 'resident')
+                ->with('requestedFlat.building')
                 ->whereIn('status', ['pending_verification', 'pending_approval'])
                 ->latest()
                 ->limit(5)
@@ -68,6 +73,7 @@ class ManagerPortalController extends Controller
         return view('manager.residents.index', [
             'residents' => User::with('residentProfile.flat.building')
                 ->where('role', 'resident')
+                ->whereIn('status', ['approved', 'suspended'])
                 ->latest()
                 ->paginate(15),
         ]);
@@ -118,8 +124,6 @@ class ManagerPortalController extends Controller
             'status' => ['required', Rule::in(['approved', 'suspended'])],
         ]);
 
-        abort_if($validated['status'] === 'approved' && ! $resident->hasVerifiedEmail(), 422, 'The resident must verify their email before reactivation.');
-
         $resident->update([
             'status' => $validated['status'],
             'approved_at' => $validated['status'] === 'approved' ? ($resident->approved_at ?? now()) : $resident->approved_at,
@@ -138,7 +142,7 @@ class ManagerPortalController extends Controller
     public function flats(): View
     {
         return view('manager.flats.index', [
-            'flats' => Flat::with(['building', 'residentProfiles.user'])->orderBy('flat_number')->paginate(20),
+            'flats' => Flat::with(['building', 'residentProfiles.user', 'pendingResidentRequests'])->orderBy('flat_number')->paginate(20),
         ]);
     }
 

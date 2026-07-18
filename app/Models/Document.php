@@ -52,4 +52,19 @@ class Document extends Model
     {
         return route('files.documents.show', $this);
     }
+
+    public function previewUrl(): string
+    {
+        return route('files.documents.show', ['document' => $this, 'preview' => 1]);
+    }
+
+    public function isPreviewable(): bool
+    {
+        $mimeType = strtolower((string) $this->mime_type);
+        $extension = strtolower(pathinfo($this->file_path, PATHINFO_EXTENSION));
+
+        return str_starts_with($mimeType, 'image/')
+            || $mimeType === 'application/pdf'
+            || in_array($extension, ['pdf', 'png', 'jpg', 'jpeg'], true);
+    }
 }
