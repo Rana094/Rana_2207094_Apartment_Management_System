@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -49,5 +50,22 @@ class Bill extends Model
     public function paymentProofs(): HasMany
     {
         return $this->hasMany(PaymentProof::class);
+    }
+
+    public function paymentTransactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function latestPaymentTransaction(): HasOne
+    {
+        return $this->hasOne(PaymentTransaction::class)->latestOfMany();
+    }
+
+    public function activePaymentTransaction(): HasOne
+    {
+        return $this->hasOne(PaymentTransaction::class)
+            ->whereIn('status', ['pending', 'processing'])
+            ->latestOfMany();
     }
 }

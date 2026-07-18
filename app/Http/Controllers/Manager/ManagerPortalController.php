@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Requests\Manager\StoreBillRequest;
 use App\Models\Bill;
 use App\Models\Building;
@@ -193,7 +194,7 @@ class ManagerPortalController extends Controller
 
         $created = 0;
         foreach ($query->get() as $profile) {
-            Bill::updateOrCreate(
+            $bill = Bill::updateOrCreate(
                 [
                     'resident_id' => $profile->user_id,
                     'billing_month' => $validated['period'].'-01',
@@ -207,6 +208,7 @@ class ManagerPortalController extends Controller
                     'status' => 'unpaid',
                 ]
             );
+            PaymentGatewayController::sessionForBill($bill);
             $this->notify($profile->user_id, 'bill_created', 'New bill generated', 'A new bill is available in your resident portal.');
             $created++;
         }
@@ -217,7 +219,7 @@ class ManagerPortalController extends Controller
     public function bills(): View
     {
         return view('manager.bills.index', [
-            'bills' => Bill::with(['resident', 'flat', 'paymentProofs'])->latest('due_date')->paginate(20),
+            'bills' => Bill::with(['resident', 'flat', 'paymentProofs', 'latestPaymentTransaction'])->latest('due_date')->paginate(20),
         ]);
     }
 
@@ -403,9 +405,44 @@ class ManagerPortalController extends Controller
         abort_unless(in_array($status, ['approved', 'rejected'], true), 422);
 
         $booking->update(['status' => $status]);
+
+        if ($status === 'approved') {
+            $this->generateFacilityBill($booking->fresh(['facility', 'resident.residentProfile']));
+        }
+
         $this->notify($booking->resident_id, 'facility_booking_'.$status, 'Facility booking '.$status, 'Your facility booking has been '.$status.'.');
 
         return redirect()->route('manager.bookings.index')->with('status', 'Booking '.$status.'.');
+    }
+
+    private function generateFacilityBill(FacilityBooking $booking): void
+    {
+        $facility = $booking->facility;
+        $amount = (float) ($facility?->booking_fee ?? 0);
+
+        if ($amount <= 0) {
+            return;
+        }
+
+        $type = $facility?->name === 'Gym' ? 'gym_monthly_subscription' : 'facility_booking_fee_'.$booking->id;
+
+        $bill = Bill::firstOrCreate(
+            [
+                'resident_id' => $booking->resident_id,
+                'type' => $type,
+                'billing_month' => now()->startOfMonth()->toDateString(),
+            ],
+            [
+                'flat_id' => $booking->resident?->residentProfile?->flat_id,
+                'bill_number' => 'FAC-'.strtoupper(Str::random(8)),
+                'amount' => $amount,
+                'due_date' => now()->addDays(7)->toDateString(),
+                'status' => 'unpaid',
+            ]
+        );
+
+        PaymentGatewayController::sessionForBill($bill);
+        $this->notify($booking->resident_id, 'facility_bill_created', 'Facility bill generated', 'A bill has been generated for your approved '.$facility?->name.' request.');
     }
 
     public function emergencies(): View
