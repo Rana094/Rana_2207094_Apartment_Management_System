@@ -94,17 +94,4 @@
     </div>
 </div>
 
-<!-- Recent Notice updates for staff -->
-<div class="card" style="padding: 1.5rem;">
-    <h3 style="font-size: 1.15rem; margin-bottom: 1rem; color: var(--primary-color);">Staff Safety Bulletins</h3>
-    <div style="display: flex; gap: 1rem; align-items: start; background-color: var(--bg-main); padding: 1rem; border-radius: var(--radius-md);">
-        <div style="font-size: 1.5rem; flex-shrink: 0;">⚠️</div>
-        <div>
-            <strong style="font-size: 0.85rem; color: var(--text-primary);">Rooftop Access Warning</strong>
-            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem; line-height: 1.4;">
-                Due to water pump maintenance, the rooftop elevator access lobby will be closed. Please use the stairwell doors for direct rooftop access.
-            </p>
-        </div>
-    </div>
-</div>
 @endsection

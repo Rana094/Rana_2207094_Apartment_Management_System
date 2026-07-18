@@ -35,7 +35,7 @@
                         <td>{{ $resident->created_at?->format('M d, Y') }}</td>
                         <td style="text-align: right;">
                             @if ($resident->file_available)
-                                <a href="{{ $resident->signupDocumentUrl() }}" class="btn btn-outline btn-sm">Open File</a>
+                                <a href="{{ $resident->signupDocumentUrl() }}" class="btn btn-outline btn-sm">Download</a>
                             @else
                                 <span class="text-muted text-xs">File unavailable</span>
                             @endif
@@ -82,7 +82,10 @@
                         <td>{{ $document->created_at?->format('M d, Y') }}</td>
                         <td style="text-align: right;">
                             @if ($document->file_available)
-                                <a href="{{ $document->secureUrl() }}" class="btn btn-outline btn-sm">Open File</a>
+                                @if ($document->isPreviewable())
+                                    <a href="{{ $document->previewUrl() }}" class="btn btn-outline btn-sm" target="_blank" rel="noopener">Open</a>
+                                @endif
+                                <a href="{{ $document->secureUrl() }}" class="btn btn-outline btn-sm">Download</a>
                             @else
                                 <span class="text-muted text-xs">File unavailable</span>
                             @endif

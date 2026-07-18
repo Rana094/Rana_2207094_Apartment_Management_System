@@ -42,21 +42,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td style="font-weight: 700;">#T-1804</td>
-                    <td style="font-weight: 700;">
-                        Demo Unit
-                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">Open an assigned work order to create real history.</div>
-                    </td>
-                    <td>
-                        <div style="font-weight: 700;">Sample completed repair</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted);">Maintenance</div>
-                    </td>
-                    <td>-</td>
-                    <td><span class="badge badge-pending" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">normal</span></td>
-                    <td><span class="badge badge-resolved">resolved</span></td>
-                    <td style="text-align: right;">
-                        <a href="{{ route('maintenance.dashboard') }}" class="btn btn-outline btn-sm">View Record</a>
-                    </td>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No completed repair history yet.</td>
                 </tr>
             @endforelse
         </tbody>

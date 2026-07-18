@@ -31,7 +31,10 @@
         <div class="stat-card-left">
             <span class="stat-label-text">Occupied Flats</span>
             <span class="stat-val">{{ $stats['occupied_flats'] }}</span>
-            <span style="font-size: .75rem; color: var(--text-secondary);">{{ $stats['vacant_flats'] }} vacant</span>
+            <span style="font-size: .75rem; color: var(--text-secondary);">{{ $stats['available_flats'] }} available for signup</span>
+            @if (($stats['reserved_flats'] ?? 0) > 0)
+                <span style="font-size: .75rem; color: var(--color-pending-verify);">{{ $stats['reserved_flats'] }} pending approval</span>
+            @endif
         </div>
     </a>
     <a href="{{ route('manager.bills.index') }}" class="stat-card" style="color: inherit; text-decoration: none;">
@@ -60,7 +63,13 @@
                     @forelse ($pendingResidents as $resident)
                         <tr>
                             <td><strong>{{ $resident->name }}</strong><div style="font-size: .75rem; color: var(--text-muted);">{{ $resident->email }}</div></td>
-                            <td>{{ $resident->flat_info ?: 'Not provided' }}</td>
+                            <td>
+                                @if ($resident->requestedFlat)
+                                    {{ $resident->requestedFlat->building?->name ?? 'Building' }}, Flat {{ $resident->requestedFlat->flat_number }}
+                                @else
+                                    {{ $resident->flat_info ?: 'Not provided' }}
+                                @endif
+                            </td>
                             <td><span class="badge badge-pending-verification">{{ ucfirst($resident->resident_type ?: 'resident') }}</span></td>
                             <td style="text-align: right;"><a href="{{ route('manager.resident-approvals.index') }}" class="btn btn-primary btn-sm">Review</a></td>
                         </tr>

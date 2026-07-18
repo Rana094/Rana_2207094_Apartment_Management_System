@@ -126,13 +126,8 @@
                 {{ session('status') }}
             </div>
         @endif
-        @error('email')
-            <div style="background: var(--bg-rejected); color: var(--color-rejected); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
-                {{ $message }}
-            </div>
-        @enderror
         <p class="status-desc">
-            Your account is waiting for email verification and manager approval. Once verified and approved by the building management, your portal access will be unlocked.
+            Your account is waiting for manager approval. Once the building management team approves your request, your portal access will be unlocked.
         </p>
         
         <!-- Registration Progress steps -->
@@ -150,18 +145,8 @@
                 </div>
             </li>
             
-            <!-- Step 2: Email Verification -->
             <li class="step-item active">
                 <span class="step-badge">2</span>
-                <div>
-                    <div class="step-title">Email Verification Pending</div>
-                    <div class="step-desc">Please click the verification link sent to your email address.</div>
-                </div>
-            </li>
-            
-            <!-- Step 3: Manager Approval -->
-            <li class="step-item">
-                <span class="step-badge">3</span>
                 <div>
                     <div class="step-title">Manager Approval Queue</div>
                     <div class="step-desc">The management team will verify your flat alignment documents.</div>
@@ -171,17 +156,6 @@
         
         <!-- Account approval actions -->
         <div class="flex flex-col gap-3">
-            @auth
-                @if (! auth()->user()->hasVerifiedEmail())
-                    <form method="POST" action="{{ route('verification.send') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-primary" style="justify-content: center; width: 100%;">
-                            Resend Verification Email
-                        </button>
-                    </form>
-                @endif
-            @endauth
-            
             <div style="display: flex; gap: 1rem; width: 100%;">
                 <a href="{{ url('/') }}" class="btn btn-outline" style="flex: 1; justify-content: center;">
                     Back to Home
