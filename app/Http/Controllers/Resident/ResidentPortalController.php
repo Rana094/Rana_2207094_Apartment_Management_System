@@ -188,14 +188,9 @@ class ResidentPortalController extends Controller
 
     public function complaint(Request $request, string $complaint): View
     {
-        $complaintModel = Complaint::find($complaint);
-
-        if ($complaintModel) {
-            $this->authorize('view', $complaintModel);
-            $complaintModel->load(['flat', 'workOrders.assignedStaff.staffProfile', 'messages.user']);
-        } elseif ($complaint !== '2033') {
-            abort(404);
-        }
+        $complaintModel = Complaint::findOrFail($complaint);
+        $this->authorize('view', $complaintModel);
+        $complaintModel->load(['flat', 'workOrders.assignedStaff.staffProfile', 'workOrders.notes.user', 'messages.user']);
 
         return view('resident.complaints.show', [
             'complaint' => $complaintModel,

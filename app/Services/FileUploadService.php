@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class FileUploadService
 {
-    public const DOCUMENT_MIMES = 'pdf,png,jpg,jpeg';
+    public const DOCUMENT_MIMES = 'pdf,png,jpg,jpeg,doc,docx';
     public const IMAGE_OR_PDF_MIMES = 'pdf,png,jpg,jpeg';
     public const MAX_DOCUMENT_KB = 5120;
     public const MAX_PROOF_KB = 5120;

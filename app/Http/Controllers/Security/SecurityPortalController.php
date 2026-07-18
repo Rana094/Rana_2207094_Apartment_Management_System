@@ -127,7 +127,9 @@ class SecurityPortalController extends Controller
     public function logs(): View
     {
         return view('security.logs', [
-            'logs' => VisitorLog::with(['flat', 'securityUser'])->latest('occurred_at')->paginate(30),
+            'logs' => VisitorLog::with(['flat.building', 'securityUser', 'visitorRequest.resident'])
+                ->latest('occurred_at')
+                ->paginate(30),
         ]);
     }
 

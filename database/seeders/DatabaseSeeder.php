@@ -114,6 +114,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $tenant->update([
+            'requested_flat_id' => $flatThree->id,
+            'flat_info' => $building->name.', Flat '.$flatThree->flat_number,
+        ]);
+
         $residentProfile = ResidentProfile::updateOrCreate(
             ['user_id' => $resident->id],
             [
@@ -165,11 +170,6 @@ class DatabaseSeeder extends Seeder
         FlatMember::updateOrCreate(
             ['resident_profile_id' => $residentProfile->id, 'name' => 'puja'],
             ['relationship' => 'Spouse', 'phone' => '+880 1711 223344']
-        );
-
-        FlatMember::updateOrCreate(
-            ['resident_profile_id' => $residentProfile->id, 'name' => 'ruhan feroz'],
-            ['relationship' => 'Brother', 'phone' => '+880 1711 332211']
         );
 
         FlatMember::updateOrCreate(
