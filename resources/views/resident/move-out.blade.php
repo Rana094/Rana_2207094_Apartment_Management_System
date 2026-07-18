@@ -8,6 +8,14 @@
     <p class="db-subtitle">Submit your notice of intent to vacate your flat unit and request service fee clearance from management.</p>
 </div>
 
+@if (session('status'))
+    <div class="alert alert-success" style="margin-bottom:1rem;">{{ session('status') }}</div>
+@endif
+
+@if ($errors->has('move_out_dues'))
+    <div class="alert alert-danger" style="margin-bottom:1rem;">{{ $errors->first('move_out_dues') }}</div>
+@endif
+
 <div class="grid grid-3" style="align-items: start;">
     
     <!-- Left Column: Clearance Checklist & Rules (1 Column) -->
@@ -40,18 +48,18 @@
                 <!-- Vacating Date -->
                 <div class="form-group">
                     <label for="move-date" class="form-label">Planned Move-Out Date</label>
-                    <input type="date" id="move-date" name="move_out_date" class="form-control" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
+                    <input type="date" id="move-date" name="move_out_date" class="form-control" value="{{ old('move_out_date', date('Y-m-d', strtotime('+30 days'))) }}" required>
                 </div>
                 
                 <!-- Reason -->
                 <div class="form-group">
                     <label for="move-reason" class="form-label">Reason for Vacating</label>
                     <select id="move-reason" name="reason" class="form-control form-select" required>
-                        <option value="" disabled selected>Select reason...</option>
-                        <option value="lease_ended">Rental Lease Agreement Expired</option>
-                        <option value="relocated">Work Relocation / City Change</option>
-                        <option value="sold">Flat Sold to New Owner</option>
-                        <option value="other">Other Personal Reasons</option>
+                        <option value="" disabled @selected(! old('reason'))>Select reason...</option>
+                        <option value="lease_ended" @selected(old('reason') === 'lease_ended')>Rental Lease Agreement Expired</option>
+                        <option value="relocated" @selected(old('reason') === 'relocated')>Work Relocation / City Change</option>
+                        <option value="sold" @selected(old('reason') === 'sold')>Flat Sold to New Owner</option>
+                        <option value="other" @selected(old('reason') === 'other')>Other Personal Reasons</option>
                     </select>
                 </div>
             </div>
@@ -59,7 +67,7 @@
             <!-- Forwarding Address -->
             <div class="form-group">
                 <label for="move-address" class="form-label">Forwarding Address <span class="text-muted" style="font-weight: normal;">(For security refund receipt dispatch)</span></label>
-                <textarea id="move-address" name="forwarding_address" class="form-control" rows="3" placeholder="Enter your upcoming residential address..." required></textarea>
+                <textarea id="move-address" name="forwarding_address" class="form-control" rows="3" placeholder="Enter your upcoming residential address..." required>{{ old('forwarding_address') }}</textarea>
             </div>
 
             <!-- Dues Acknowledgement -->

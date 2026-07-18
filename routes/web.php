@@ -4,12 +4,15 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\FileAccessController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Maintenance\MaintenancePortalController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\Resident\ResidentPortalController;
 use App\Http\Controllers\Security\SecurityPortalController;
+use App\Http\Controllers\WeatherController;
 use App\Models\ContactMessage;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
@@ -27,6 +30,7 @@ Route::get('/about', function () {
 Route::get('/contact', function () {
     return view('contact');
 })->name('contact');
+Route::get('/contact/map', [LocationController::class, 'apartmentMap'])->name('contact.map');
 
 Route::post('/contact', function (Request $request) {
     $validated = $request->validate([
@@ -90,6 +94,21 @@ Route::middleware(['auth', 'approved'])->group(function () {
     Route::get('/files/payment-proofs/{paymentProof}', [FileAccessController::class, 'paymentProof'])->name('files.payment-proofs.show');
     Route::get('/files/work-order-proofs/{note}', [FileAccessController::class, 'workOrderProof'])->name('files.work-order-proofs.show');
 
+    Route::prefix('pay')
+        ->name('payments.')
+        ->middleware(['role:resident', 'residentpaymenttransactionmiddleware', 'residentpaymenttransactionnocachemiddleware'])
+        ->group(function () {
+            Route::get('/{token}', [PaymentGatewayController::class, 'show'])
+                ->middleware('residentpaymenttransactionredirectpaidmiddleware')
+                ->name('show');
+            Route::get('/{token}/qr.svg', [PaymentGatewayController::class, 'qr'])->name('qr');
+            Route::post('/{token}/confirm', [PaymentGatewayController::class, 'confirm'])
+                ->middleware('residentpaymenttransactionpayablemiddleware')
+                ->name('confirm');
+            Route::get('/{token}/success', [PaymentGatewayController::class, 'success'])->name('success');
+            Route::get('/{token}/unavailable', [PaymentGatewayController::class, 'unavailable'])->name('unavailable');
+        });
+
     Route::get('/resident/dashboard', [DashboardController::class, 'resident'])
         ->middleware('role:resident')
         ->name('resident.dashboard');
@@ -115,13 +134,18 @@ Route::middleware(['auth', 'approved'])->group(function () {
             Route::post('/visitors/{visitor}/cancel', [ResidentPortalController::class, 'cancelVisitor'])->name('visitors.cancel');
             Route::get('/bookings', [ResidentPortalController::class, 'bookings'])->name('bookings.index');
             Route::get('/bookings/create', [ResidentPortalController::class, 'createBooking'])->name('bookings.create');
-            Route::post('/bookings', [ResidentPortalController::class, 'storeBooking'])->name('bookings.store');
+            Route::post('/bookings', [ResidentPortalController::class, 'storeBooking'])
+                ->middleware('residentfacilitybookingmiddleware')
+                ->name('bookings.store');
+            Route::get('/bookings/weather/current', [WeatherController::class, 'current'])->name('bookings.weather.current');
             Route::get('/emergency', [ResidentPortalController::class, 'emergency'])->name('emergency');
             Route::post('/emergency', [ResidentPortalController::class, 'storeEmergency'])->name('emergency.store');
             Route::get('/documents', [ResidentPortalController::class, 'documents'])->name('documents');
             Route::post('/documents', [ResidentPortalController::class, 'storeDocument'])->name('documents.store');
             Route::get('/move-out', [ResidentPortalController::class, 'moveOut'])->name('move-out');
-            Route::post('/move-out', [ResidentPortalController::class, 'storeMoveOut'])->name('move-out.store');
+            Route::post('/move-out', [ResidentPortalController::class, 'storeMoveOut'])
+                ->middleware('residentmoveoutduesmiddleware')
+                ->name('move-out.store');
             Route::get('/profile', [ResidentPortalController::class, 'profile'])->name('profile');
             Route::put('/profile', [ResidentPortalController::class, 'updateProfile'])->name('profile.update');
             Route::put('/profile/password', [ResidentPortalController::class, 'updatePassword'])->name('profile.password.update');
