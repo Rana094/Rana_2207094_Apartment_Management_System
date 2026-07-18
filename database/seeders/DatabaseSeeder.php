@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Http\Controllers\PaymentGatewayController;
 use App\Models\Bill;
 use App\Models\Building;
 use App\Models\Complaint;
+use App\Models\ContactMessage;
+use App\Models\Document;
 use App\Models\EmergencyRequest;
 use App\Models\Facility;
 use App\Models\FacilityBooking;
@@ -12,6 +15,7 @@ use App\Models\Flat;
 use App\Models\FlatMember;
 use App\Models\MoveOutRequest;
 use App\Models\Notice;
+use App\Models\Notification;
 use App\Models\ResidentProfile;
 use App\Models\SecurityIncident;
 use App\Models\StaffProfile;
@@ -33,11 +37,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $manager = $this->seedUser('rana', 'manager@nestora.com', 'manager', 'approved');
+        User::whereIn('email', [
+            'manager@gmail.com',
+            'manger@nestora.com',
+            'resident@nestora.com',
+            'pending@nestora.com',
+            'ullas@gmail.com',
+            'issac@gmail.com',
+            'shorif@gmail.com',
+            'avash@gmail.com',
+        ])->delete();
+
+        $manager = $this->seedUser('manager', 'manager@nestora.com', 'manager', 'approved');
         $security = $this->seedUser('ruhan', 'security@nestora.com', 'security', 'approved');
         $maintenance = $this->seedUser('bipro', 'staff@nestora.com', 'staff', 'approved');
-        $resident = $this->seedUser('ullas', 'resident@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 1A');
-        $tenant = $this->seedUser('avash', 'pending@nestora.com', 'resident', 'pending_approval', 'tenant', 'Building A, Flat 2B');
+        $resident = $this->seedUser('ullas', 'ullas@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 1A');
+        $issac = $this->seedUser('issac', 'issac@nestora.com', 'resident', 'approved', 'tenant', 'Building A, Flat 2B');
+        $shorif = $this->seedUser('shorif', 'shorif@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 4D');
+        $tenant = $this->seedUser('avash', 'avash@nestora.com', 'resident', 'pending_approval', 'tenant', 'Building A, Flat 3C');
 
         $building = Building::updateOrCreate(
             ['code' => 'NEST-A'],
@@ -73,7 +90,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        Flat::updateOrCreate(
+        $flatThree = Flat::updateOrCreate(
             ['building_id' => $building->id, 'flat_number' => '3C'],
             [
                 'floor' => 3,
@@ -82,6 +99,18 @@ class DatabaseSeeder extends Seeder
                 'bedrooms' => 1,
                 'area_sqft' => 720,
                 'status' => 'vacant',
+            ]
+        );
+
+        $flatFour = Flat::updateOrCreate(
+            ['building_id' => $building->id, 'flat_number' => '4D'],
+            [
+                'floor' => 4,
+                'block' => 'A',
+                'type' => 'family',
+                'bedrooms' => 3,
+                'area_sqft' => 1380,
+                'status' => 'occupied',
             ]
         );
 
@@ -97,21 +126,60 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        ResidentProfile::updateOrCreate(
-            ['user_id' => $tenant->id],
+        $issacProfile = ResidentProfile::updateOrCreate(
+            ['user_id' => $issac->id],
             [
                 'flat_id' => $flatTwo->id,
                 'resident_type' => 'tenant',
-                'move_in_date' => now()->subMonths(3)->toDateString(),
-                'emergency_contact_name' => 'issac',
+                'move_in_date' => now()->subMonths(8)->toDateString(),
+                'emergency_contact_name' => 'maria',
                 'emergency_contact_phone' => '+880 1711 556677',
+                'status' => 'active',
+            ]
+        );
+
+        $shorifProfile = ResidentProfile::updateOrCreate(
+            ['user_id' => $shorif->id],
+            [
+                'flat_id' => $flatFour->id,
+                'resident_type' => 'owner',
+                'move_in_date' => now()->subYear()->toDateString(),
+                'emergency_contact_name' => 'ayesha',
+                'emergency_contact_phone' => '+880 1711 889900',
+                'status' => 'active',
+            ]
+        );
+
+        ResidentProfile::updateOrCreate(
+            ['user_id' => $tenant->id],
+            [
+                'flat_id' => $flatThree->id,
+                'resident_type' => 'tenant',
+                'move_in_date' => now()->subMonth()->toDateString(),
+                'emergency_contact_name' => 'alok',
+                'emergency_contact_phone' => '+880 1711 112233',
                 'status' => 'pending',
             ]
         );
 
         FlatMember::updateOrCreate(
-            ['resident_profile_id' => $residentProfile->id, 'name' => 'alok'],
+            ['resident_profile_id' => $residentProfile->id, 'name' => 'puja'],
             ['relationship' => 'Spouse', 'phone' => '+880 1711 223344']
+        );
+
+        FlatMember::updateOrCreate(
+            ['resident_profile_id' => $residentProfile->id, 'name' => 'ruhan feroz'],
+            ['relationship' => 'Brother', 'phone' => '+880 1711 332211']
+        );
+
+        FlatMember::updateOrCreate(
+            ['resident_profile_id' => $issacProfile->id, 'name' => 'maria'],
+            ['relationship' => 'Spouse', 'phone' => '+880 1711 556677']
+        );
+
+        FlatMember::updateOrCreate(
+            ['resident_profile_id' => $shorifProfile->id, 'name' => 'ayesha'],
+            ['relationship' => 'Spouse', 'phone' => '+880 1711 889900']
         );
 
         VehicleRegistration::updateOrCreate(
@@ -123,6 +191,44 @@ class DatabaseSeeder extends Seeder
                 'model' => 'Corolla',
                 'parking_slot' => 'A-12',
                 'status' => 'active',
+            ]
+        );
+
+        VehicleRegistration::updateOrCreate(
+            ['registration_number' => 'DHAKA-METRO-KHA-778899'],
+            [
+                'resident_profile_id' => $issacProfile->id,
+                'vehicle_type' => 'motorbike',
+                'brand' => 'Yamaha',
+                'model' => 'FZS',
+                'parking_slot' => 'B-04',
+                'status' => 'active',
+            ]
+        );
+
+        Document::updateOrCreate(
+            ['user_id' => $resident->id, 'title' => 'NID Verification Copy'],
+            [
+                'flat_id' => $flatOne->id,
+                'type' => 'nid',
+                'file_path' => 'resident-documents/demo-nid-ullas.pdf',
+                'mime_type' => 'application/pdf',
+                'file_size' => 128000,
+                'status' => 'approved',
+                'verified_at' => now()->subDays(10),
+                'verified_by' => $manager->id,
+            ]
+        );
+
+        Document::updateOrCreate(
+            ['user_id' => $issac->id, 'title' => 'Lease Agreement'],
+            [
+                'flat_id' => $flatTwo->id,
+                'type' => 'lease',
+                'file_path' => 'resident-documents/demo-lease-issac.pdf',
+                'mime_type' => 'application/pdf',
+                'file_size' => 256000,
+                'status' => 'pending_verification',
             ]
         );
 
@@ -207,6 +313,45 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        Bill::updateOrCreate(
+            ['bill_number' => 'BILL-2026-07-2B'],
+            [
+                'resident_id' => $issac->id,
+                'flat_id' => $flatTwo->id,
+                'billing_month' => now()->startOfMonth()->toDateString(),
+                'type' => 'monthly_service_charge',
+                'amount' => 3800,
+                'due_date' => now()->addDays(6)->toDateString(),
+                'status' => 'unpaid',
+            ]
+        );
+
+        Bill::updateOrCreate(
+            ['bill_number' => 'BILL-2026-07-4D'],
+            [
+                'resident_id' => $shorif->id,
+                'flat_id' => $flatFour->id,
+                'billing_month' => now()->startOfMonth()->toDateString(),
+                'type' => 'monthly_service_charge',
+                'amount' => 4200,
+                'due_date' => now()->addDays(4)->toDateString(),
+                'status' => 'overdue',
+            ]
+        );
+
+        Bill::updateOrCreate(
+            ['bill_number' => 'GYM-2026-07-1A'],
+            [
+                'resident_id' => $resident->id,
+                'flat_id' => $flatOne->id,
+                'billing_month' => now()->startOfMonth()->toDateString(),
+                'type' => 'gym_monthly_subscription',
+                'amount' => 3000,
+                'due_date' => now()->addDays(7)->toDateString(),
+                'status' => 'unpaid',
+            ]
+        );
+
         VisitorRequest::updateOrCreate(
             ['access_code' => 'VISIT123'],
             [
@@ -218,6 +363,20 @@ class DatabaseSeeder extends Seeder
                 'visit_date' => now()->addDay()->toDateString(),
                 'expected_entry_time' => '18:00',
                 'status' => 'approved',
+            ]
+        );
+
+        VisitorRequest::updateOrCreate(
+            ['access_code' => 'GUEST2B'],
+            [
+                'resident_id' => $issac->id,
+                'flat_id' => $flatTwo->id,
+                'visitor_name' => 'Daniel Costa',
+                'visitor_phone' => '+880 1811 989898',
+                'purpose' => 'Dinner visit',
+                'visit_date' => now()->addDays(2)->toDateString(),
+                'expected_entry_time' => '19:30',
+                'status' => 'pending',
             ]
         );
 
@@ -300,6 +459,28 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $rooftop = Facility::where('name', 'Rooftop BBQ Grill Station')->first();
+
+        FacilityBooking::updateOrCreate(
+            ['resident_id' => $issac->id, 'facility_id' => $rooftop?->id, 'booking_date' => now()->addDays(5)->toDateString()],
+            [
+                'start_time' => '17:00',
+                'end_time' => '21:00',
+                'purpose' => 'Birthday BBQ',
+                'status' => 'approved',
+            ]
+        );
+
+        FacilityBooking::updateOrCreate(
+            ['resident_id' => $shorif->id, 'facility_id' => $communityHall->id, 'booking_date' => now()->addDays(10)->toDateString()],
+            [
+                'start_time' => '11:00',
+                'end_time' => '15:00',
+                'purpose' => 'Family program',
+                'status' => 'rejected',
+            ]
+        );
+
         EmergencyRequest::updateOrCreate(
             ['resident_id' => $resident->id, 'type' => 'maintenance', 'message' => 'Elevator stopped briefly near floor one.'],
             [
@@ -307,6 +488,50 @@ class DatabaseSeeder extends Seeder
                 'status' => 'resolved',
                 'created_at' => now()->subDays(3),
                 'resolved_at' => now()->subDays(2),
+            ]
+        );
+
+        EmergencyRequest::updateOrCreate(
+            ['resident_id' => $issac->id, 'type' => 'medical', 'message' => 'Resident requested urgent medical help from flat 2B.'],
+            [
+                'flat_id' => $flatTwo->id,
+                'status' => 'open',
+                'created_at' => now()->subMinutes(30),
+                'resolved_at' => null,
+            ]
+        );
+
+        $secondComplaint = Complaint::updateOrCreate(
+            ['resident_id' => $issac->id, 'title' => 'Bedroom AC not cooling'],
+            [
+                'flat_id' => $flatTwo->id,
+                'category' => 'electrical',
+                'description' => 'AC turns on but does not cool properly.',
+                'priority' => 'medium',
+                'status' => 'open',
+            ]
+        );
+
+        Complaint::updateOrCreate(
+            ['resident_id' => $shorif->id, 'title' => 'Corridor light flickering'],
+            [
+                'flat_id' => $flatFour->id,
+                'category' => 'electrical',
+                'description' => 'Common corridor light near flat 4D is flickering at night.',
+                'priority' => 'low',
+                'status' => 'completed',
+            ]
+        );
+
+        WorkOrder::updateOrCreate(
+            ['complaint_id' => $secondComplaint->id, 'title' => 'Check AC cooling issue'],
+            [
+                'assigned_to' => $maintenance->id,
+                'assigned_by' => $manager->id,
+                'instructions' => 'Inspect gas level and clean AC filter.',
+                'priority' => 'medium',
+                'status' => 'in_progress',
+                'due_at' => now()->addDays(2),
             ]
         );
 
@@ -329,6 +554,36 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        Notice::updateOrCreate(
+            ['title' => 'Gym subscription policy updated'],
+            [
+                'created_by' => $manager->id,
+                'body' => 'Gym access is now handled as a Tk 3,000 monthly subscription after manager approval.',
+                'audience' => 'resident',
+                'published_at' => now()->subHours(6),
+            ]
+        );
+
+        ContactMessage::updateOrCreate(
+            ['email' => 'society.owner@example.com', 'subject' => 'Apartment management demo request'],
+            [
+                'name' => 'feroz',
+                'phone' => '+880 1811 112244',
+                'message' => 'I want to see how Nestora handles residents, bills, visitors, and emergencies.',
+                'status' => 'new',
+            ]
+        );
+
+        Notification::updateOrCreate(
+            ['user_id' => $resident->id, 'type' => 'bill_created', 'title' => 'New bill generated'],
+            [
+                'audience' => 'user',
+                'body' => 'Your July service charge and gym subscription bills are available.',
+                'action_url' => route('resident.bills.index', absolute: false),
+                'read_at' => null,
+            ]
+        );
+
         SecurityIncident::updateOrCreate(
             ['subject' => 'Unauthorized parking block'],
             [
@@ -340,6 +595,8 @@ class DatabaseSeeder extends Seeder
                 'occurred_at' => now()->subHours(3),
             ]
         );
+
+        Bill::where('status', '!=', 'paid')->get()->each(fn (Bill $bill) => PaymentGatewayController::sessionForBill($bill));
     }
 
     private function seedUser(

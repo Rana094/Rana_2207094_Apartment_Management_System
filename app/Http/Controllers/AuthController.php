@@ -25,17 +25,14 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', Rule::in(['resident', 'manager', 'security', 'staff'])],
         ]);
 
         $remember = $request->boolean('remember');
-        $role = $credentials['role'];
-        unset($credentials['role']);
 
-        if (! Auth::attempt($credentials + ['role' => $role], $remember)) {
+        if (! Auth::attempt($credentials, $remember)) {
             return back()
-                ->withErrors(['email' => 'The selected role, email, or password is incorrect.'])
-                ->onlyInput('email', 'role');
+                ->withErrors(['email' => 'The email or password is incorrect.'])
+                ->onlyInput('email');
         }
 
         $request->session()->regenerate();

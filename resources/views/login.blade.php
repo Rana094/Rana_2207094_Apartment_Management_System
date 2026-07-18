@@ -30,35 +30,6 @@
         margin-bottom: 0.5rem;
     }
     
-    /* Role Selector Tabs */
-    .role-tabs {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        background-color: #f1f5f9;
-        border-radius: var(--radius-md);
-        padding: 0.25rem;
-        margin-bottom: 1.5rem;
-        border: 1px solid var(--border-color);
-    }
-    .role-tab-btn {
-        background: none;
-        border: none;
-        padding: 0.5rem 0.25rem;
-        font-family: inherit;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-        border-radius: var(--radius-sm);
-        cursor: pointer;
-        transition: var(--transition-fast);
-        text-align: center;
-    }
-    .role-tab-btn.active {
-        background-color: #ffffff;
-        color: var(--primary-color);
-        box-shadow: var(--shadow-sm);
-    }
-    
     .form-options {
         display: flex;
         justify-content: space-between;
@@ -73,6 +44,26 @@
         color: var(--text-secondary);
         cursor: pointer;
     }
+    .password-field {
+        position: relative;
+    }
+    .password-field .form-control {
+        padding-right: 4.25rem;
+    }
+    .password-toggle {
+        position: absolute;
+        right: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: 0;
+        color: var(--primary-color);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 0.25rem;
+    }
 </style>
 
 <div class="auth-wrapper">
@@ -81,23 +72,7 @@
             <h1>Welcome Back</h1>
             <p style="color: var(--text-secondary); font-size: 0.95rem;">Enter your credentials to access your Nestora dashboard.</p>
         </div>
-        
-        <!-- Role-Aware Tabs -->
-        <div class="role-tabs" role="tablist">
-            <button type="button" class="role-tab-btn active" data-role="resident" aria-selected="true" role="tab">
-                Resident
-            </button>
-            <button type="button" class="role-tab-btn" data-role="manager" aria-selected="false" role="tab">
-                Manager
-            </button>
-            <button type="button" class="role-tab-btn" data-role="security" aria-selected="false" role="tab">
-                Security
-            </button>
-            <button type="button" class="role-tab-btn" data-role="staff" aria-selected="false" role="tab">
-                Staff
-            </button>
-        </div>
-        
+
         @if ($errors->any())
             <div style="background: var(--bg-rejected); color: var(--color-rejected); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
                 {{ $errors->first() }}
@@ -112,17 +87,18 @@
 
         <form action="{{ route('login.store') }}" method="POST" id="login-form">
             @csrf
-            <!-- Hidden Role Input to pass role selection to backend -->
-            <input type="hidden" name="role" id="selected-role" value="{{ old('role', 'resident') }}">
-            
+
             <div class="form-group">
                 <label for="login-email" class="form-label">Email Address</label>
-                <input type="email" id="login-email" name="email" class="form-control" placeholder="e.g. resident@nestora.com" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                <input type="email" id="login-email" name="email" class="form-control" placeholder="e.g. ullas@gmail.com" value="{{ old('email') }}" required autocomplete="email" autofocus>
             </div>
             
             <div class="form-group">
                 <label for="login-password" class="form-label">Password</label>
-                <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                <div class="password-field">
+                    <input type="password" id="login-password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                    <button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">Show</button>
+                </div>
             </div>
             
             <div class="form-options">
@@ -134,7 +110,7 @@
             </div>
             
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 1.5rem;">
-                Sign In as <span id="btn-role-text" style="text-transform: capitalize; margin-left: 0.25rem;">Resident</span>
+                Sign In
             </button>
             
             <div style="text-align: center; font-size: 0.9rem; color: var(--text-secondary);">
@@ -146,38 +122,20 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('.role-tab-btn');
-        const roleInput = document.getElementById('selected-role');
-        const btnRoleText = document.getElementById('btn-role-text');
-        const emailInput = document.getElementById('login-email');
-        
-        // Placeholder helper to show role specific email placeholder
-        const rolePlaceholders = {
-            resident: 'resident@nestora.com',
-            manager: 'manager@nestora.com',
-            security: 'security@nestora.com',
-            staff: 'staff@nestora.com'
-        };
+        const passwordInput = document.getElementById('login-password');
+        const toggle = document.getElementById('password-toggle');
 
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Remove active classes
-                tabs.forEach(t => {
-                    t.classList.remove('active');
-                    t.setAttribute('aria-selected', 'false');
-                });
-                
-                // Add active to clicked tab
-                this.classList.add('active');
-                this.setAttribute('aria-selected', 'true');
-                
-                const selectedRole = this.getAttribute('data-role');
-                roleInput.value = selectedRole;
-                btnRoleText.textContent = selectedRole;
-                
-                // Update email placeholder for easier demonstration
-                emailInput.placeholder = 'e.g. ' + rolePlaceholders[selectedRole];
-            });
+        if (!passwordInput || !toggle) {
+            return;
+        }
+
+        toggle.addEventListener('click', function() {
+            const isVisible = passwordInput.type === 'text';
+
+            passwordInput.type = isVisible ? 'password' : 'text';
+            toggle.textContent = isVisible ? 'Show' : 'Hide';
+            toggle.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+            toggle.setAttribute('aria-pressed', isVisible ? 'false' : 'true');
         });
     });
 </script>

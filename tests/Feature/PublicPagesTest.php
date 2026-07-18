@@ -47,7 +47,7 @@ class PublicPagesTest extends TestCase
         $response = $this->get('/login');
         $response->assertStatus(200);
         $response->assertSee('Welcome Back');
-        $response->assertSee('Sign In as');
+        $response->assertSee('Sign In');
     }
 
     /**
