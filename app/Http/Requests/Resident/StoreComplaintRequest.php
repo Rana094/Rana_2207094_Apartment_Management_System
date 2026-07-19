@@ -7,6 +7,9 @@ use Illuminate\Validation\Rule;
 
 class StoreComplaintRequest extends FormRequest
 {
+    /**
+     * Normalize urgency from the UI into the priority field stored in the database.
+     */
     protected function prepareForValidation(): void
     {
         if ($this->filled('urgency') && ! $this->filled('priority')) {
@@ -14,11 +17,17 @@ class StoreComplaintRequest extends FormRequest
         }
     }
 
+    /**
+     * Only residents can create maintenance complaints.
+     */
     public function authorize(): bool
     {
         return $this->user()?->role === 'resident';
     }
 
+    /**
+     * Validate complaint content and allowed urgency levels.
+     */
     public function rules(): array
     {
         return [

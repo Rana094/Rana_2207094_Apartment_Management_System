@@ -8,12 +8,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ResidentMoveOutDuesMiddleware
 {
+    /**
+     * Block move-out requests until the resident has paid all outstanding bills.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         $resident = $request->user();
 
         abort_unless($resident?->role === 'resident', 403);
 
+        // Only fully paid bills allow a resident to start the move-out process.
         $outstandingBills = $resident->bills()
             ->where('status', '!=', 'paid')
             ->orderBy('due_date')

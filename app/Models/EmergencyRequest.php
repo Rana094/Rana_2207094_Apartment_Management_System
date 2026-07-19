@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Emergency alert raised by resident or security and tracked until resolved.
+ */
 class EmergencyRequest extends Model
 {
     use HasFactory;
