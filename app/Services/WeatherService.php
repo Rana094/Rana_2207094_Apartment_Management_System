@@ -7,10 +7,14 @@ use Illuminate\Support\Facades\Http;
 
 class WeatherService
 {
+    /**
+     * Fetch current weather from OpenWeather for facility booking guidance.
+     */
     public function current(?float $lat = null, ?float $lon = null): array
     {
         $apiKey = config('services.openweather.api_key');
 
+        // Keep the UI stable when the API key is missing instead of throwing an exception.
         if (! $apiKey) {
             return [
                 'available' => false,
@@ -19,11 +23,13 @@ class WeatherService
         }
 
         if ($lat === null || $lon === null) {
+            // Default coordinates point to the apartment area for rooftop booking checks.
             $lat = (float) config('services.openweather.default_lat');
             $lon = (float) config('services.openweather.default_lon');
         }
 
         try {
+            // Network APIs can fail offline, so catch connection errors and return a friendly response.
             $response = Http::timeout(8)->get('https://api.openweathermap.org/data/2.5/weather', [
                 'lat' => $lat,
                 'lon' => $lon,
@@ -39,6 +45,7 @@ class WeatherService
 
         if (! $response->successful()) {
             if ($response->status() === 401) {
+                // 401 specifically means the configured OpenWeather key is invalid or inactive.
                 return [
                     'available' => false,
                     'message' => 'OpenWeather rejected the API key. Check OPENWEATHER_API_KEY in .env.',
@@ -58,6 +65,7 @@ class WeatherService
         $feelsLike = $payload['main']['feels_like'] ?? null;
         $wind = $payload['wind']['speed'] ?? null;
 
+        // Return only the fields the booking page needs instead of exposing the whole API payload.
         return [
             'available' => true,
             'location' => $payload['name'] ?? 'Apartment area',
@@ -72,6 +80,9 @@ class WeatherService
         ];
     }
 
+    /**
+     * Convert raw weather conditions into a simple facility-use safety message.
+     */
     private function safetyMessage(string $condition, mixed $temp, mixed $wind): string
     {
         $condition = strtolower($condition);

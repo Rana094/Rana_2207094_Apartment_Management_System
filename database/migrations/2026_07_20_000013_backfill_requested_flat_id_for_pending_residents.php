@@ -7,6 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Match old text-based flat_info values to real flats for existing pending residents.
         $flats = DB::table('flats')
             ->join('buildings', 'buildings.id', '=', 'flats.building_id')
             ->select('flats.id', 'flats.flat_number', 'buildings.name as building_name')
@@ -22,6 +23,7 @@ return new class extends Migration
             ->each(function (object $resident) use ($flats): void {
                 $flatInfo = strtolower((string) $resident->flat_info);
 
+                // Best-effort matching keeps old seed/user data compatible with requested_flat_id.
                 $flat = $flats->first(function (object $flat) use ($flatInfo): bool {
                     $flatNumberMatches = str_contains($flatInfo, strtolower((string) $flat->flat_number));
                     $buildingMatches = str_contains($flatInfo, strtolower((string) $flat->building_name));
@@ -39,6 +41,7 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Rollback only clears pending requested flats; approved ResidentProfiles are left intact.
         DB::table('users')
             ->where('role', 'resident')
             ->whereIn('status', ['pending_verification', 'pending_approval'])

@@ -22,7 +22,7 @@ use Illuminate\Support\ServiceProvider;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register application services before the app is booted.
      */
     public function register(): void
     {
@@ -30,10 +30,11 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Connect models to policies so controllers can call $this->authorize().
      */
     public function boot(): void
     {
+        // Policies centralize access rules for bills, documents, complaints, visitors, and work orders.
         Gate::policy(Bill::class, BillPolicy::class);
         Gate::policy(Complaint::class, ComplaintPolicy::class);
         Gate::policy(Document::class, DocumentPolicy::class);

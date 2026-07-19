@@ -11,12 +11,17 @@ use Illuminate\Validation\Validator;
 
 class RegisterResidentRequest extends FormRequest
 {
+    /**
+     * Signup is public, so guests are allowed to submit this request.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
     /**
+     * Validate resident signup fields before AuthController creates the user.
+     *
      * @return array<string, array<int, mixed>>
      */
     public function rules(): array
@@ -32,6 +37,9 @@ class RegisterResidentRequest extends FormRequest
         ];
     }
 
+    /**
+     * Run extra validation after normal rules to ensure the selected flat is truly available.
+     */
     public function after(): array
     {
         return [
@@ -42,6 +50,7 @@ class RegisterResidentRequest extends FormRequest
                     return;
                 }
 
+                // Scope checks vacancy plus active/pending resident conflicts.
                 $isAvailable = Flat::query()
                     ->availableForSignup()
                     ->whereKey($flatId)
@@ -55,6 +64,8 @@ class RegisterResidentRequest extends FormRequest
     }
 
     /**
+     * User-friendly validation messages shown on the signup form.
+     *
      * @return array<string, string>
      */
     public function messages(): array

@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $description
  * @property string $priority
  * @property string $status
+ *
+ * Maintenance complaint submitted by a resident and assigned to staff through work orders.
  */
 class Complaint extends Model
 {
