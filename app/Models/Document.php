@@ -48,16 +48,25 @@ class Document extends Model
         return $this->belongsTo(User::class, 'verified_by');
     }
 
+    /**
+     * Authenticated download URL for this private document.
+     */
     public function secureUrl(): string
     {
         return route('files.documents.show', $this);
     }
 
+    /**
+     * Authenticated preview URL for browser-previewable files.
+     */
     public function previewUrl(): string
     {
         return route('files.documents.show', ['document' => $this, 'preview' => 1]);
     }
 
+    /**
+     * Only images and PDFs are previewed inline; Word files download instead.
+     */
     public function isPreviewable(): bool
     {
         $mimeType = strtolower((string) $this->mime_type);

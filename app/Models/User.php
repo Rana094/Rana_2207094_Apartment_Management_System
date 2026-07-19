@@ -84,11 +84,17 @@ class User extends Authenticatable
         return $this->role === 'resident';
     }
 
+    /**
+     * A user becomes portal-ready only after manager approval.
+     */
     public function isApproved(): bool
     {
         return $this->status === 'approved' && $this->approved_at !== null;
     }
 
+    /**
+     * Resolve the correct dashboard route based on user role.
+     */
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
@@ -99,16 +105,25 @@ class User extends Authenticatable
         };
     }
 
+    /**
+     * Approved resident details such as assigned flat and emergency contact.
+     */
     public function residentProfile(): HasOne
     {
         return $this->hasOne(ResidentProfile::class);
     }
 
+    /**
+     * Flat selected during signup before manager approval.
+     */
     public function requestedFlat(): BelongsTo
     {
         return $this->belongsTo(Flat::class, 'requested_flat_id');
     }
 
+    /**
+     * Staff/security profile information for employee accounts.
+     */
     public function staffProfile(): HasOne
     {
         return $this->hasOne(StaffProfile::class);
@@ -169,16 +184,25 @@ class User extends Authenticatable
         return $this->hasMany(SecurityIncident::class, 'reported_by');
     }
 
+    /**
+     * Secure URL for the signup document uploaded before approval.
+     */
     public function signupDocumentUrl(): ?string
     {
         return $this->document_path ? route('files.resident-signup.show', $this) : null;
     }
 
+    /**
+     * Maintenance work orders assigned to this user when they are staff.
+     */
     public function assignedWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_to');
     }
 
+    /**
+     * Work orders created by this user when they are a manager.
+     */
     public function createdWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_by');

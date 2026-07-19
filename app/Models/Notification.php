@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * In-app notification for one user, one role, or all portal users.
+ */
 class Notification extends Model
 {
     use HasFactory;

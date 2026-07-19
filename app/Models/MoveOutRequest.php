@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Resident move-out request submitted after dues validation.
+ */
 class MoveOutRequest extends Model
 {
     use HasFactory;

@@ -15,6 +15,8 @@ use Illuminate\Support\Carbon;
  * @property string $remarks
  * @property string|null $proof_path
  * @property Carbon $noted_at
+ *
+ * Repair/status note submitted by staff for a maintenance work order.
  */
 class WorkOrderNote extends Model
 {
@@ -39,6 +41,9 @@ class WorkOrderNote extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Secure route for viewing optional completion proof.
+     */
     public function secureProofUrl(): ?string
     {
         return $this->proof_path ? route('files.work-order-proofs.show', $this) : null;

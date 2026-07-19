@@ -14,16 +14,25 @@ class Flat extends Model
 
     protected $guarded = [];
 
+    /**
+     * Building that contains this flat.
+     */
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
     }
 
+    /**
+     * Resident profiles currently or historically linked to the flat.
+     */
     public function residentProfiles(): HasMany
     {
         return $this->hasMany(ResidentProfile::class);
     }
 
+    /**
+     * Pending signup users who selected this flat before approval.
+     */
     public function pendingResidentRequests(): HasMany
     {
         return $this->hasMany(User::class, 'requested_flat_id')
@@ -31,6 +40,9 @@ class Flat extends Model
             ->whereIn('status', ['pending_verification', 'pending_approval']);
     }
 
+    /**
+     * Flats selectable during signup: vacant, no active resident, no pending request.
+     */
     public function scopeAvailableForSignup(Builder $query): Builder
     {
         return $query

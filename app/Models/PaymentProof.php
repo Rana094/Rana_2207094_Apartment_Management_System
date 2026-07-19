@@ -19,6 +19,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $verified_at
  * @property int|null $verified_by
  */
+/**
+ * Manual payment proof uploaded by a resident for manager verification.
+ */
 class PaymentProof extends Model
 {
     use HasFactory;
@@ -49,6 +52,9 @@ class PaymentProof extends Model
         return $this->belongsTo(User::class, 'verified_by');
     }
 
+    /**
+     * Secure route for downloading this private payment proof.
+     */
     public function secureUrl(): string
     {
         return route('files.payment-proofs.show', $this);

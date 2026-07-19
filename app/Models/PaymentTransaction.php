@@ -32,6 +32,9 @@ class PaymentTransaction extends Model
         return $this->belongsTo(User::class, 'resident_id');
     }
 
+    /**
+     * Generate a unique secure token used in resident payment URLs.
+     */
     public static function generateToken(): string
     {
         do {
@@ -41,6 +44,9 @@ class PaymentTransaction extends Model
         return $token;
     }
 
+    /**
+     * Generate a human-readable transaction number for receipts/history.
+     */
     public static function generateTransactionNumber(): string
     {
         do {
