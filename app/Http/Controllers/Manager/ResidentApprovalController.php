@@ -12,6 +12,9 @@ use App\Services\NotificationService;
 
 class ResidentApprovalController extends Controller
 {
+    /**
+     * List resident signup requests waiting for manager approval.
+     */
     public function index(): View
     {
         return view('manager.resident-approvals.index', [
@@ -24,12 +27,16 @@ class ResidentApprovalController extends Controller
         ]);
     }
 
+    /**
+     * Approve a resident and convert their requested flat into an active assignment.
+     */
     public function approve(Request $request, User $resident): RedirectResponse
     {
         abort_unless($resident->role === 'resident', 404);
 
         $flat = $resident->requestedFlat()->first();
 
+        // Approval is blocked if the requested flat disappeared or was already taken.
         abort_unless($flat !== null, 422, 'This resident did not select a valid flat.');
         $flat->loadMissing('building');
         abort_unless($flat->status === 'vacant', 422, 'The selected flat is no longer vacant.');
@@ -50,6 +57,7 @@ class ResidentApprovalController extends Controller
             'flat_info' => trim(($flat->building?->name ? $flat->building->name.', ' : '').'Flat '.$flat->flat_number),
         ])->save();
 
+        // ResidentProfile is what connects an approved resident to their active flat.
         ResidentProfile::updateOrCreate(
             ['user_id' => $resident->id],
             [
@@ -60,6 +68,7 @@ class ResidentApprovalController extends Controller
             ]
         );
 
+        // Once approved, the flat is no longer available for signup.
         $flat->update([
             'status' => 'occupied',
             'type' => $resident->resident_type ?? $flat->type,
@@ -76,6 +85,9 @@ class ResidentApprovalController extends Controller
         return back()->with('status', "{$resident->name} has been approved.");
     }
 
+    /**
+     * Reject a resident signup and release the requested flat for others.
+     */
     public function reject(Request $request, User $resident): RedirectResponse
     {
         abort_unless($resident->role === 'resident', 404);

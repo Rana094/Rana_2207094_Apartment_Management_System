@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    /**
+     * Return notifications visible to the logged-in user with read/unread state.
+     */
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -18,6 +21,7 @@ class NotificationController extends Controller
             ->latest()
             ->paginate(20);
 
+        // Personal notifications store read_at directly; broadcast notifications use notification_reads.
         $notifications->getCollection()->transform(function (Notification $notification) use ($user) {
             $notification->is_read = $notification->user_id
                 ? $notification->read_at !== null
@@ -32,6 +36,9 @@ class NotificationController extends Controller
         ]);
     }
 
+    /**
+     * Mark one personal or broadcast notification as read.
+     */
     public function markRead(Request $request, Notification $notification): RedirectResponse|JsonResponse
     {
         $this->authorizeNotification($request, $notification);
@@ -39,6 +46,7 @@ class NotificationController extends Controller
         if ($notification->user_id) {
             $notification->update(['read_at' => now()]);
         } else {
+            // Broadcast notifications need a per-user read row.
             NotificationRead::updateOrCreate(
                 ['notification_id' => $notification->id, 'user_id' => $request->user()->id],
                 ['read_at' => now()]
@@ -52,15 +60,20 @@ class NotificationController extends Controller
         return back()->with('status', 'Notification marked as read.');
     }
 
+    /**
+     * Mark every currently visible notification as read for this user.
+     */
     public function markAllRead(Request $request): RedirectResponse|JsonResponse
     {
         $user = $request->user();
 
+        // Personal notifications can be updated directly on the notifications table.
         $this->visibleNotifications($request)
             ->where('user_id', $user->id)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
+        // Broadcast notifications must create read rows for this specific user.
         $this->visibleNotifications($request)
             ->whereNull('user_id')
             ->whereDoesntHave('reads', fn ($query) => $query->where('user_id', $user->id))
@@ -78,6 +91,9 @@ class NotificationController extends Controller
         return back()->with('status', 'All notifications marked as read.');
     }
 
+    /**
+     * Ensure a user can only interact with their own or role-wide notifications.
+     */
     private function authorizeNotification(Request $request, Notification $notification): void
     {
         $user = $request->user();
@@ -88,6 +104,9 @@ class NotificationController extends Controller
         );
     }
 
+    /**
+     * Base query for personal, all-user, and role-specific notifications.
+     */
     private function visibleNotifications(Request $request)
     {
         $user = $request->user();
@@ -99,6 +118,9 @@ class NotificationController extends Controller
             });
     }
 
+    /**
+     * Count unread personal notifications plus broadcast notifications without a read row.
+     */
     private function unreadCount(Request $request): int
     {
         $user = $request->user();

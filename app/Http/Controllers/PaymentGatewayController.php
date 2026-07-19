@@ -18,6 +18,9 @@ use Illuminate\View\View;
 
 class PaymentGatewayController extends Controller
 {
+    /**
+     * Show the payment screen for a valid resident payment token.
+     */
     public function show(Request $request, string $token): View
     {
         $transaction = $this->resolveTransaction($request, $token);
@@ -29,10 +32,14 @@ class PaymentGatewayController extends Controller
         ]);
     }
 
+    /**
+     * Generate an SVG QR code that points back to this transaction's payment page.
+     */
     public function qr(Request $request, string $token): Response
     {
         $transaction = $this->resolveTransaction($request, $token);
 
+        // QR uses the public payment URL so it can be scanned from another device.
         $builder = new Builder(
             writer: new SvgWriter,
             writerOptions: [
@@ -56,10 +63,14 @@ class PaymentGatewayController extends Controller
         ]);
     }
 
+    /**
+     * Confirm payment and update both the transaction and bill atomically.
+     */
     public function confirm(Request $request, string $token): RedirectResponse
     {
         $transaction = $this->resolveTransaction($request, $token);
 
+        // Transaction keeps payment and bill status synchronized if anything fails.
         DB::transaction(function () use ($request, $transaction) {
             $transaction->update([
                 'status' => 'paid',
@@ -94,6 +105,9 @@ class PaymentGatewayController extends Controller
             ->with('status', 'Payment completed successfully.');
     }
 
+    /**
+     * Show the success screen after a completed payment.
+     */
     public function success(Request $request, string $token): View
     {
         $transaction = $this->resolveTransaction($request, $token);
@@ -104,6 +118,9 @@ class PaymentGatewayController extends Controller
         ]);
     }
 
+    /**
+     * Show a friendly page when a payment token is paid, expired, or unusable.
+     */
     public function unavailable(Request $request, string $token): View
     {
         $transaction = $this->resolveTransaction($request, $token);
@@ -114,6 +131,9 @@ class PaymentGatewayController extends Controller
         ]);
     }
 
+    /**
+     * Reuse an active payment transaction for a bill or create a fresh payment link.
+     */
     public static function sessionForBill(Bill $bill): ?PaymentTransaction
     {
         if ($bill->status === 'paid') {
@@ -133,10 +153,14 @@ class PaymentGatewayController extends Controller
             ]);
     }
 
+    /**
+     * Resolve a token into a transaction and ensure it belongs to the current resident.
+     */
     private function resolveTransaction(Request $request, string $token): PaymentTransaction
     {
         $middlewareTransaction = $request->attributes->get('paymentTransaction');
 
+        // Payment middleware loads this first, so avoid a duplicate database query when available.
         if ($middlewareTransaction instanceof PaymentTransaction) {
             return $middlewareTransaction;
         }
@@ -151,6 +175,9 @@ class PaymentGatewayController extends Controller
         return $transaction;
     }
 
+    /**
+     * Build the absolute payment URL stored in the QR code.
+     */
     private function paymentUrl(PaymentTransaction $transaction): string
     {
         return rtrim((string) config('app.url'), '/').route('payments.show', $transaction->payment_token, false);

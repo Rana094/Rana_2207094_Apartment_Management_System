@@ -30,6 +30,9 @@ use Illuminate\View\View;
 
 class ResidentPortalController extends Controller
 {
+    /**
+     * Show resident dashboard with recent bills, complaints, bookings, notices, and visitors.
+     */
     public function dashboard(Request $request): View
     {
         $user = $request->user();
@@ -47,6 +50,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show the resident's flat profile, household members, vehicles, and documents.
+     */
     public function flat(Request $request): View
     {
         $profile = $this->residentProfile($request)?->load(['flat.building', 'flatMembers', 'vehicleRegistrations']);
@@ -60,6 +66,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Submit a vehicle registration request for manager review.
+     */
     public function storeVehicle(Request $request): RedirectResponse
     {
         $profile = $this->residentProfile($request);
@@ -89,6 +98,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.flat')->with('status', 'Vehicle registration submitted for review.');
     }
 
+    /**
+     * List bills visible to the logged-in resident.
+     */
     public function bills(Request $request): View
     {
         return view('resident.bills.index', [
@@ -96,6 +108,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show a single bill and prepare/reuse its online payment transaction.
+     */
     public function bill(Request $request, string $bill): View
     {
         $billModel = $this->resolveBillForDisplay($request, $bill);
@@ -106,6 +121,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show manual payment proof upload form for a bill.
+     */
     public function uploadPaymentProof(Request $request, string $bill): View
     {
         $billModel = $this->resolveBillForDisplay($request, $bill);
@@ -113,12 +131,16 @@ class ResidentPortalController extends Controller
         return view('resident.bills.upload', ['bill' => $billModel]);
     }
 
+    /**
+     * Store manual payment proof and notify managers for verification.
+     */
     public function storePaymentProof(StorePaymentProofRequest $request, Bill $bill): RedirectResponse
     {
         $this->authorize('uploadPaymentProof', $bill);
 
         $validated = $request->validated();
 
+        // Payment proof files are stored privately and viewed through FileAccessController.
         $path = app(FileUploadService::class)->store(
             $request->file('payment_proof') ?? $request->file('receipt_file'),
             'payment-proofs'
@@ -147,6 +169,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.bills.show', $bill)->with('status', 'Payment proof uploaded for manager verification.');
     }
 
+    /**
+     * List maintenance complaints created by this resident.
+     */
     public function complaints(Request $request): View
     {
         return view('resident.complaints.index', [
@@ -154,15 +179,22 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show form for creating a new maintenance complaint.
+     */
     public function createComplaint(): View
     {
         return view('resident.complaints.create');
     }
 
+    /**
+     * Store a new maintenance complaint and notify managers.
+     */
     public function storeComplaint(StoreComplaintRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
+        // Link the complaint to the resident's active flat so manager/staff know the location.
         $complaint = Complaint::create([
             'resident_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
@@ -186,6 +218,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.complaints.show', $complaint)->with('status', 'Complaint submitted successfully.');
     }
 
+    /**
+     * Show complaint details, discussion messages, assigned staff, and repair updates.
+     */
     public function complaint(Request $request, string $complaint): View
     {
         $complaintModel = Complaint::findOrFail($complaint);
@@ -197,6 +232,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Add a resident reply to a complaint discussion.
+     */
     public function storeComplaintMessage(Request $request, Complaint $complaint): RedirectResponse
     {
         $this->authorize('view', $complaint);
@@ -222,6 +260,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.complaints.show', $complaint)->with('status', 'Reply posted.');
     }
 
+    /**
+     * List visitor passes requested by this resident.
+     */
     public function visitors(Request $request): View
     {
         return view('resident.visitors.index', [
@@ -229,13 +270,20 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show visitor request form.
+     */
     public function createVisitor(): View
     {
         return view('resident.visitors.create');
     }
 
+    /**
+     * Create a visitor pass and notify security for gate handling.
+     */
     public function storeVisitor(Request $request): RedirectResponse
     {
+        // Accept alternate field names used by older forms and normalize them for validation.
         $request->merge([
             'visitor_name' => $request->input('visitor_name', $request->input('name')),
             'visitor_phone' => $request->input('visitor_phone', $request->input('phone')),
@@ -254,6 +302,7 @@ class ResidentPortalController extends Controller
         $visitor = VisitorRequest::create($validated + [
             'resident_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
+            // Security uses this access code to find and check in the visitor.
             'access_code' => strtoupper(Str::random(8)),
             'status' => 'pending',
         ]);
@@ -269,6 +318,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.visitors.index')->with('status', 'Visitor request created.');
     }
 
+    /**
+     * Cancel a visitor pass before check-in.
+     */
     public function cancelVisitor(Request $request, VisitorRequest $visitor): RedirectResponse
     {
         $this->authorize('view', $visitor);
@@ -287,6 +339,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.visitors.index')->with('status', 'Visitor pass cancelled.');
     }
 
+    /**
+     * List facility booking requests for the resident.
+     */
     public function bookings(Request $request): View
     {
         return view('resident.bookings.index', [
@@ -295,6 +350,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show available resident-facing facilities for booking.
+     */
     public function createBooking(): View
     {
         return view('resident.bookings.create', [
@@ -305,8 +363,12 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a facility booking request after middleware validates facility rules.
+     */
     public function storeBooking(Request $request): RedirectResponse
     {
+        // Normalize friendly facility values from older/simple forms into facility_id.
         if ($request->filled('facility') && ! $request->filled('facility_id')) {
             $facility = Facility::where('name', 'like', '%'.$request->input('facility').'%')
                 ->orWhere('name', match ($request->input('facility')) {
@@ -322,6 +384,7 @@ class ResidentPortalController extends Controller
             }
         }
 
+        // Normalize date/shift shortcut fields into the actual booking columns.
         if ($request->filled('date') && ! $request->filled('booking_date')) {
             $request->merge(['booking_date' => $request->input('date')]);
         }
@@ -338,6 +401,7 @@ class ResidentPortalController extends Controller
 
         $selectedFacility = $request->attributes->get('selectedFacility');
         if ($selectedFacility?->name === 'Gym') {
+            // Gym is treated as a monthly subscription, so it does not need a time slot.
             $request->merge([
                 'booking_date' => $request->input('booking_date', today()->toDateString()),
                 'start_time' => '00:00',
@@ -370,6 +434,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.bookings.index')->with('status', 'Facility booking request submitted.');
     }
 
+    /**
+     * Show emergency request page and recent emergency history.
+     */
     public function emergency(Request $request): View
     {
         return view('resident.emergency', [
@@ -377,6 +444,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Create an emergency request and notify both manager and security.
+     */
     public function storeEmergency(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -387,10 +457,12 @@ class ResidentPortalController extends Controller
         $emergency = EmergencyRequest::create(array_merge($validated, [
             'resident_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
+            // Leak is stored as maintenance so emergency categories remain consistent.
             'type' => $validated['type'] === 'leak' ? 'maintenance' : $validated['type'],
             'status' => 'open',
         ]));
 
+        // Emergencies go to both roles because manager coordinates and security responds.
         foreach (['manager', 'security'] as $role) {
             app(NotificationService::class)->toRole(
                 $role,
@@ -404,6 +476,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.emergency')->with('status', 'Emergency request sent.');
     }
 
+    /**
+     * List documents uploaded by the resident.
+     */
     public function documents(Request $request): View
     {
         return view('resident.documents', [
@@ -411,8 +486,12 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a resident document privately for manager verification.
+     */
     public function storeDocument(Request $request): RedirectResponse
     {
+        // Older forms post category; convert it into the document type used by the database.
         if ($request->filled('category') && ! $request->filled('type')) {
             $request->merge([
                 'type' => match ($request->input('category')) {
@@ -433,6 +512,7 @@ class ResidentPortalController extends Controller
 
         $file = $request->file('document') ?? $request->file('document_file');
 
+        // Documents remain pending until manager review.
         $document = Document::create([
             'user_id' => $request->user()->id,
             'flat_id' => $this->residentProfile($request)?->flat_id,
@@ -455,6 +535,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.documents')->with('status', 'Document uploaded for verification.');
     }
 
+    /**
+     * Show move-out request form and past requests.
+     */
     public function moveOut(Request $request): View
     {
         return view('resident.move-out', [
@@ -462,8 +545,12 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a move-out request after dues middleware confirms bills are clear.
+     */
     public function storeMoveOut(Request $request): RedirectResponse
     {
+        // Accept old form field name and normalize it to requested_move_out_date.
         if ($request->filled('move_out_date') && ! $request->filled('requested_move_out_date')) {
             $request->merge(['requested_move_out_date' => $request->input('move_out_date')]);
         }
@@ -476,6 +563,7 @@ class ResidentPortalController extends Controller
 
         $reason = $validated['reason'] ?? null;
         if (! empty($validated['forwarding_address'])) {
+            // Store forwarding address together with reason because the table has one reason text field.
             $reason = trim(($reason ? $reason."\n\n" : '').'Forwarding address: '.$validated['forwarding_address']);
         }
 
@@ -498,6 +586,9 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.move-out')->with('status', 'Move-out request submitted.');
     }
 
+    /**
+     * Show resident profile settings.
+     */
     public function profile(Request $request): View
     {
         return view('resident.profile', [
@@ -506,6 +597,9 @@ class ResidentPortalController extends Controller
         ]);
     }
 
+    /**
+     * Update resident account and emergency contact information.
+     */
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
@@ -522,6 +616,7 @@ class ResidentPortalController extends Controller
             'email' => $validated['email'],
             'phone' => $validated['phone'],
         ]);
+        // Emergency contact fields live on ResidentProfile, not the users table.
         $this->residentProfile($request)?->update([
             'emergency_contact_name' => $validated['emergency_contact_name'] ?? null,
             'emergency_contact_phone' => $validated['emergency_contact_phone'] ?? null,
@@ -530,8 +625,12 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.profile')->with('status', 'Profile updated.');
     }
 
+    /**
+     * Update resident password after validating current password and confirmation.
+     */
     public function updatePassword(Request $request): RedirectResponse
     {
+        // Some forms use new_password; normalize to Laravel's password/password_confirmation names.
         if ($request->filled('new_password') && ! $request->filled('password')) {
             $request->merge([
                 'password' => $request->input('new_password'),
@@ -549,16 +648,25 @@ class ResidentPortalController extends Controller
         return redirect()->route('resident.profile')->with('status', 'Password updated.');
     }
 
+    /**
+     * Get the resident profile with flat/building information for the current user.
+     */
     private function residentProfile(Request $request)
     {
         return $request->user()->residentProfile()->with('flat.building')->first();
     }
 
+    /**
+     * Delegate bill ownership checks to BillPolicy.
+     */
     private function ensureOwnsBill(Request $request, Bill $bill): void
     {
         $this->authorize('view', $bill);
     }
 
+    /**
+     * Resolve a bill ID for display and ensure the resident owns it.
+     */
     private function resolveBillForDisplay(Request $request, string $bill): ?Bill
     {
         $billModel = Bill::find($bill);
@@ -569,6 +677,7 @@ class ResidentPortalController extends Controller
             return $billModel;
         }
 
+        // Legacy demo bill fallback kept for old links; real missing bill IDs still 404.
         if ($bill === '9872') {
             return null;
         }

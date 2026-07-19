@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Http;
 
 class LocationController extends Controller
 {
+    /**
+     * Generate the static map image shown on the contact page using Geoapify.
+     */
     public function apartmentMap(): Response
     {
         $apiKey = config('services.geoapify.api_key');
@@ -17,6 +20,7 @@ class LocationController extends Controller
         $lat = (float) config('services.geoapify.apartment_lat');
         $lon = (float) config('services.geoapify.apartment_lon');
 
+        // The HTTP client encodes # in the marker color, so pass the raw color value here.
         $response = Http::timeout(8)->get('https://maps.geoapify.com/v1/staticmap', [
             'style' => 'osm-bright',
             'width' => 900,
@@ -35,6 +39,9 @@ class LocationController extends Controller
         ]);
     }
 
+    /**
+     * Return an approximate location for the current visitor IP address.
+     */
     public function currentIpLocation(Request $request): JsonResponse
     {
         $response = Http::timeout(8)->get('http://ip-api.com/json/', [

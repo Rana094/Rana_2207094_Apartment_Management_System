@@ -16,6 +16,9 @@ use Illuminate\View\View;
 
 class MaintenancePortalController extends Controller
 {
+    /**
+     * Show staff dashboard with only work orders assigned to the logged-in staff member.
+     */
     public function dashboard(Request $request): View
     {
         $workOrders = $this->assignedOrders($request)
@@ -35,6 +38,9 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Show all assigned work orders with pagination.
+     */
     public function workOrders(Request $request): View
     {
         return view('maintenance.dashboard', [
@@ -44,6 +50,9 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Show only assigned work orders currently in progress.
+     */
     public function inProgress(Request $request): View
     {
         return view('maintenance.dashboard', [
@@ -53,11 +62,17 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Reuse the repair history page for completed work-order menu links.
+     */
     public function completed(Request $request): View
     {
         return $this->history($request);
     }
 
+    /**
+     * Show one real assigned work order, including resident messages and staff repair notes.
+     */
     public function show(Request $request, string $order): View
     {
         $workOrder = $this->resolveAssignedOrder($request, $order);
@@ -67,10 +82,14 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Show the status update form for an unfinished assigned work order.
+     */
     public function edit(Request $request, string $order): View
     {
         $workOrder = $this->resolveAssignedOrder($request, $order);
 
+        // Completed work orders are historical records and should not be edited.
         abort_if($workOrder->status === 'completed', 404);
 
         return view('maintenance.update', [
@@ -78,10 +97,14 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a staff progress note and synchronize the linked complaint status.
+     */
     public function update(UpdateWorkOrderRequest $request, WorkOrder $order): RedirectResponse
     {
         $this->authorize('update', $order);
 
+        // Accept common status wording from the UI but store consistent database values.
         $statusMap = [
             'resolved' => 'completed',
             'complete' => 'completed',
@@ -98,6 +121,7 @@ class MaintenancePortalController extends Controller
 
         $proof = $request->file('completion_photo') ?? $request->file('completion_proof');
 
+        // Notes are the repair update history visible to staff and residents.
         WorkOrderNote::create([
             'work_order_id' => $order->id,
             'user_id' => $request->user()->id,
@@ -113,6 +137,7 @@ class MaintenancePortalController extends Controller
         ]);
 
         if ($order->complaint) {
+            // Resident complaint status follows the maintenance work-order progress.
             $order->complaint->update([
                 'status' => $status === 'completed' ? 'resolved' : 'in_progress',
             ]);
@@ -139,6 +164,9 @@ class MaintenancePortalController extends Controller
         return redirect()->route('maintenance.show', $order)->with('status', 'Work order updated.');
     }
 
+    /**
+     * Show completed repair history and all notes submitted by this staff member.
+     */
     public function history(Request $request): View
     {
         return view('maintenance.history', [
@@ -154,6 +182,9 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Reuse the shared profile view for maintenance staff account settings.
+     */
     public function profile(Request $request): View
     {
         return view('resident.profile', [
@@ -162,6 +193,9 @@ class MaintenancePortalController extends Controller
         ]);
     }
 
+    /**
+     * Update basic staff profile fields.
+     */
     public function updateProfile(Request $request): RedirectResponse
     {
         $user = $request->user();
@@ -176,8 +210,12 @@ class MaintenancePortalController extends Controller
         return redirect()->route('maintenance.profile')->with('status', 'Profile updated.');
     }
 
+    /**
+     * Update staff password after confirming the current password.
+     */
     public function updatePassword(Request $request): RedirectResponse
     {
+        // Some profile forms submit new_password; normalize it to Laravel's confirmed rule names.
         if ($request->filled('new_password') && ! $request->filled('password')) {
             $request->merge([
                 'password' => $request->input('new_password'),
@@ -195,11 +233,17 @@ class MaintenancePortalController extends Controller
         return redirect()->route('maintenance.profile')->with('status', 'Password updated.');
     }
 
+    /**
+     * Base query for all work orders assigned to the current staff user.
+     */
     private function assignedOrders(Request $request)
     {
         return WorkOrder::query()->where('assigned_to', $request->user()->id);
     }
 
+    /**
+     * Count work orders by status for dashboard stat cards.
+     */
     private function staffStats(Request $request): array
     {
         return [
@@ -210,6 +254,9 @@ class MaintenancePortalController extends Controller
         ];
     }
 
+    /**
+     * Resolve a work order ID and enforce that the current staff member can view it.
+     */
     private function resolveAssignedOrder(Request $request, string $order): WorkOrder
     {
         $workOrder = WorkOrder::findOrFail($order);
@@ -219,6 +266,9 @@ class MaintenancePortalController extends Controller
         return $workOrder;
     }
 
+    /**
+     * Delegate view permission to the WorkOrderPolicy.
+     */
     private function ensureAssigned(Request $request, WorkOrder $order): void
     {
         $this->authorize('view', $order);

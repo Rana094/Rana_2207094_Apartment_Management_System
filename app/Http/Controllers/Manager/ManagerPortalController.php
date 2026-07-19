@@ -31,6 +31,9 @@ use Illuminate\View\View;
 
 class ManagerPortalController extends Controller
 {
+    /**
+     * Show manager overview counts and urgent operational items.
+     */
     public function dashboard(): View
     {
         return view('manager.dashboard', [
@@ -68,6 +71,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * List approved or suspended residents for resident management.
+     */
     public function residents(): View
     {
         return view('manager.residents.index', [
@@ -79,6 +85,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show a single resident with flat, document, bill, complaint, member, and vehicle details.
+     */
     public function resident(string $resident): View
     {
         $residentModel = User::with(['residentProfile.flat.building', 'documents', 'bills', 'complaints'])
@@ -90,6 +99,9 @@ class ManagerPortalController extends Controller
         return view('manager.residents.show', ['resident' => $residentModel]);
     }
 
+    /**
+     * Show signup verification documents and resident-uploaded documents.
+     */
     public function documents(): View
     {
         $registrationDocuments = User::query()
@@ -98,6 +110,7 @@ class ManagerPortalController extends Controller
             ->latest()
             ->paginate(15, ['*'], 'registrations_page');
 
+        // Check physical file existence so the UI can show missing-upload problems clearly.
         $registrationDocuments->getCollection()->each(function (User $resident) {
             $resident->file_available = Storage::disk('private_uploads')->exists($resident->document_path);
         });
@@ -106,6 +119,7 @@ class ManagerPortalController extends Controller
             ->latest()
             ->paginate(15, ['*'], 'documents_page');
 
+        // Document records can exist even if the file was moved/deleted; show that state to managers.
         $residentDocuments->getCollection()->each(function (Document $document) {
             $document->file_available = Storage::disk('private_uploads')->exists($document->file_path);
         });
@@ -116,6 +130,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Suspend or reactivate an already approved resident account.
+     */
     public function updateResidentStatus(Request $request, User $resident): RedirectResponse
     {
         abort_unless($resident->role === 'resident', 404);
@@ -139,6 +156,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.residents.index')->with('status', 'Resident account '.$validated['status'].'.');
     }
 
+    /**
+     * List flats with current occupants and pending signup requests.
+     */
     public function flats(): View
     {
         return view('manager.flats.index', [
@@ -146,6 +166,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show the flat creation form.
+     */
     public function createFlat(): View
     {
         return view('manager.flats.form', [
@@ -153,6 +176,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a new flat after normalizing form field names.
+     */
     public function storeFlat(Request $request): RedirectResponse
     {
         $data = $this->validateFlat($request);
@@ -161,6 +187,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.flats.index')->with('status', 'Flat created.');
     }
 
+    /**
+     * Show edit form for an existing flat.
+     */
     public function editFlat(Flat $flat): View
     {
         $flat->load('building');
@@ -171,6 +200,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Update flat details from manager input.
+     */
     public function updateFlat(Request $request, Flat $flat): RedirectResponse
     {
         $flat->update($this->validateFlat($request));
@@ -178,6 +210,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.flats.index')->with('status', 'Flat updated.');
     }
 
+    /**
+     * Show the bill generation form with all flats.
+     */
     public function generateBill(): View
     {
         return view('manager.bills.generate', [
@@ -185,10 +220,14 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Generate bills for one flat or all approved resident profiles.
+     */
     public function storeBill(StoreBillRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
+        // Bills are generated only for residents whose accounts are approved.
         $query = ResidentProfile::with('user')
             ->whereHas('user', fn ($q) => $q->where('status', 'approved'));
 
@@ -198,6 +237,7 @@ class ManagerPortalController extends Controller
 
         $created = 0;
         foreach ($query->get() as $profile) {
+            // updateOrCreate prevents duplicate bills for the same resident/month/type.
             $bill = Bill::updateOrCreate(
                 [
                     'resident_id' => $profile->user_id,
@@ -212,6 +252,7 @@ class ManagerPortalController extends Controller
                     'status' => 'unpaid',
                 ]
             );
+            // Each bill gets a Nestora Pay session immediately for resident payment.
             PaymentGatewayController::sessionForBill($bill);
             $this->notify($profile->user_id, 'bill_created', 'New bill generated', 'A new bill is available in your resident portal.');
             $created++;
@@ -220,6 +261,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.bills.index')->with('status', "{$created} bill(s) generated.");
     }
 
+    /**
+     * List generated bills and their payment state.
+     */
     public function bills(): View
     {
         return view('manager.bills.index', [
@@ -227,6 +271,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * List uploaded manual payment proofs waiting for manager review.
+     */
     public function payments(): View
     {
         return view('manager.payments.index', [
@@ -234,6 +281,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show one payment proof with related bill and resident details.
+     */
     public function payment(PaymentProof $payment): View
     {
         $payment->load(['bill.resident', 'user']);
@@ -241,6 +291,9 @@ class ManagerPortalController extends Controller
         return view('manager.payments.show', ['paymentProof' => $payment]);
     }
 
+    /**
+     * Approve or reject an uploaded payment proof and update the bill status.
+     */
     public function verifyPayment(Request $request, PaymentProof $paymentProof): RedirectResponse
     {
         $this->authorize('verify', $paymentProof);
@@ -254,6 +307,7 @@ class ManagerPortalController extends Controller
             'verified_by' => $request->user()->id,
         ]);
 
+        // Approved proof marks the bill paid; rejected proof reopens it as unpaid.
         $paymentProof->bill->update([
             'status' => $status === 'approved' ? 'paid' : 'unpaid',
             'paid_at' => $status === 'approved' ? now() : null,
@@ -264,6 +318,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.payments.index')->with('status', 'Payment proof '.$status.'.');
     }
 
+    /**
+     * Show billing totals, collection breakdown, and recent approved payments.
+     */
     public function reports(): View
     {
         return view('manager.reports.financial', [
@@ -286,6 +343,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * List resident complaints for assignment or reassignment.
+     */
     public function complaints(): View
     {
         return view('manager.complaints.index', [
@@ -293,6 +353,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show form for dispatching a maintenance staff member to a complaint.
+     */
     public function assignComplaint(Complaint $complaint): View
     {
         $complaint->load(['resident', 'flat']);
@@ -303,6 +366,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Create a work order from a resident complaint and notify staff/resident.
+     */
     public function storeWorkOrder(Request $request, Complaint $complaint): RedirectResponse
     {
         $this->authorize('assign', $complaint);
@@ -319,6 +385,7 @@ class ManagerPortalController extends Controller
             'instructions' => ['nullable', 'string', 'max:2000'],
         ]);
 
+        // WorkOrder is the staff-facing task created from the resident complaint.
         WorkOrder::create([
             'complaint_id' => $complaint->id,
             'assigned_to' => $validated['technician_id'],
@@ -337,6 +404,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.complaints.index')->with('status', 'Work order assigned.');
     }
 
+    /**
+     * List maintenance and security staff accounts.
+     */
     public function staff(): View
     {
         return view('manager.staff', [
@@ -344,6 +414,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Create an approved staff/security login with staff profile details.
+     */
     public function storeStaff(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -356,6 +429,7 @@ class ManagerPortalController extends Controller
             'password' => ['nullable', Password::min(8)],
         ]);
 
+        // Manager-created staff are immediately approved because manager is trusted.
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -385,6 +459,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.staff')->with('status', 'Staff member created.');
     }
 
+    /**
+     * Remove a staff or security account.
+     */
     public function destroyStaff(User $staff): RedirectResponse
     {
         abort_unless(in_array($staff->role, ['staff', 'security'], true), 404);
@@ -394,6 +471,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.staff')->with('status', 'Staff member removed.');
     }
 
+    /**
+     * List facility booking requests for approval/rejection.
+     */
     public function bookings(): View
     {
         return view('manager.bookings', [
@@ -401,6 +481,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Approve or reject a facility booking and generate a bill when approved.
+     */
     public function updateBooking(Request $request, FacilityBooking $booking): RedirectResponse
     {
         $this->authorize('updateStatus', $booking);
@@ -411,6 +494,7 @@ class ManagerPortalController extends Controller
         $booking->update(['status' => $status]);
 
         if ($status === 'approved') {
+            // Approved paid facilities immediately create a resident bill.
             $this->generateFacilityBill($booking->fresh(['facility', 'resident.residentProfile']));
         }
 
@@ -419,6 +503,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.bookings.index')->with('status', 'Booking '.$status.'.');
     }
 
+    /**
+     * Create a bill for an approved facility booking when the facility has a fee.
+     */
     private function generateFacilityBill(FacilityBooking $booking): void
     {
         $facility = $booking->facility;
@@ -428,6 +515,7 @@ class ManagerPortalController extends Controller
             return;
         }
 
+        // Gym uses one monthly subscription bill; other facilities are billed per booking.
         $type = $facility?->name === 'Gym' ? 'gym_monthly_subscription' : 'facility_booking_fee_'.$booking->id;
 
         $bill = Bill::firstOrCreate(
@@ -449,6 +537,9 @@ class ManagerPortalController extends Controller
         $this->notify($booking->resident_id, 'facility_bill_created', 'Facility bill generated', 'A bill has been generated for your approved '.$facility?->name.' request.');
     }
 
+    /**
+     * List emergency requests visible to managers.
+     */
     public function emergencies(): View
     {
         return view('manager.emergencies', [
@@ -456,6 +547,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Update emergency progress from open to in-progress or resolved.
+     */
     public function updateEmergency(Request $request, EmergencyRequest $emergency): RedirectResponse
     {
         $status = $request->input('status', 'resolved');
@@ -469,6 +563,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.emergencies.index')->with('status', 'Emergency status updated.');
     }
 
+    /**
+     * List published notices.
+     */
     public function notices(): View
     {
         return view('manager.notices', [
@@ -476,6 +573,9 @@ class ManagerPortalController extends Controller
         ]);
     }
 
+    /**
+     * Publish a notice and create notifications for all portal users.
+     */
     public function storeNotice(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -502,6 +602,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.notices.index')->with('status', 'Notice published.');
     }
 
+    /**
+     * Delete a notice from the manager notice board.
+     */
     public function destroyNotice(Notice $notice): RedirectResponse
     {
         $notice->delete();
@@ -509,6 +612,9 @@ class ManagerPortalController extends Controller
         return redirect()->route('manager.notices.index')->with('status', 'Notice deleted.');
     }
 
+    /**
+     * Validate the flat form and translate UI field names to database columns.
+     */
     private function validateFlat(Request $request): array
     {
         $validated = $request->validate([
@@ -521,6 +627,7 @@ class ManagerPortalController extends Controller
             'occupancy' => ['nullable', 'string', 'max:100'],
         ]);
 
+        // The UI posts number/size/beds; the database stores flat_number/area_sqft/bedrooms.
         return [
             'building_id' => $validated['building_id'],
             'flat_number' => $validated['number'],
@@ -533,6 +640,9 @@ class ManagerPortalController extends Controller
         ];
     }
 
+    /**
+     * Small helper for sending a user notification from manager actions.
+     */
     private function notify(?int $userId, string $type, string $title, ?string $body = null): void
     {
         app(NotificationService::class)->toUser($userId, $type, $title, $body);

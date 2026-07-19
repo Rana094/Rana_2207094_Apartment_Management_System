@@ -13,6 +13,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileAccessController extends Controller
 {
+    /**
+     * Serve an uploaded resident document after policy authorization.
+     */
     public function document(Request $request, Document $document): BinaryFileResponse
     {
         $this->authorize('view', $document);
@@ -25,10 +28,14 @@ class FileAccessController extends Controller
         );
     }
 
+    /**
+     * Serve the document uploaded during signup to the resident or a manager.
+     */
     public function residentSignupDocument(Request $request, User $resident): BinaryFileResponse
     {
         $user = $request->user();
 
+        // Signup documents are private; only the owner resident and managers may access them.
         abort_unless(
             $user->role === 'manager' || $resident->id === $user->id,
             403
@@ -40,6 +47,9 @@ class FileAccessController extends Controller
         return $this->serve($documentPath, $resident->name.' verification document', inline: $request->boolean('preview'));
     }
 
+    /**
+     * Serve a resident's uploaded payment proof after permission checks.
+     */
     public function paymentProof(Request $request, PaymentProof $paymentProof): BinaryFileResponse
     {
         $this->authorize('view', $paymentProof);
@@ -47,11 +57,15 @@ class FileAccessController extends Controller
         return $this->serve($paymentProof->file_path, 'payment-proof-'.$paymentProof->id, $paymentProof->mime_type);
     }
 
+    /**
+     * Serve maintenance completion proof linked to a work order note.
+     */
     public function workOrderProof(Request $request, WorkOrderNote $note): BinaryFileResponse
     {
         $user = $request->user();
         $workOrder = $note->workOrder()->with('complaint')->firstOrFail();
 
+        // Reuse work-order permissions so assigned staff, resident, and manager rules stay consistent.
         $this->authorize('view', $workOrder);
 
         $proofPath = $note->proof_path;
@@ -60,6 +74,9 @@ class FileAccessController extends Controller
         return $this->serve($proofPath, 'work-order-proof-'.$note->id);
     }
 
+    /**
+     * Read a private upload from disk and return it either inline or as a download.
+     */
     private function serve(string $path, string $name, ?string $mimeType = null, bool $inline = false): BinaryFileResponse
     {
         $disk = Storage::disk('private_uploads');
@@ -73,6 +90,7 @@ class FileAccessController extends Controller
         ]);
 
         if ($inline) {
+            // Inline preview lets browsers display supported PDFs/images instead of downloading.
             $headers['Content-Disposition'] = 'inline; filename="'.$fileName.'"';
 
             return response()->file($absolutePath, $headers);
@@ -81,6 +99,9 @@ class FileAccessController extends Controller
         return response()->download($absolutePath, $fileName, $headers);
     }
 
+    /**
+     * Build a safe download filename and preserve the stored file extension.
+     */
     private function downloadName(string $name, string $path): string
     {
         $fileName = trim(str_replace(['/', '\\', '"'], '-', $name));

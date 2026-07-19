@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Maintenance staff task states.
+ */
 enum WorkOrderStatus: string
 {
     case Todo = 'todo';

@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Standard lifecycle states for resident maintenance complaints.
+ */
 enum ComplaintStatus: string
 {
     case Open = 'open';
