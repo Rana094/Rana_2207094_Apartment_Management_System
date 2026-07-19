@@ -12,6 +12,7 @@
     <div class="card" style="grid-column: span 1;">
         <h3 style="margin-bottom: 1.25rem; font-size: 1.15rem;">Upload Document</h3>
 
+        {{-- ResidentPortalController@storeDocument validates the upload and stores the file privately with FileUploadService. --}}
         <form action="{{ route('resident.documents.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
@@ -62,6 +63,7 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- These links use protected FileAccessController routes, so files are not exposed from the public folder. --}}
                 @forelse ($documents as $document)
                     <tr>
                         <td style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
@@ -99,6 +101,7 @@
         const fileNameSpan = document.getElementById('file-chosen-name');
 
         if (fileInput && fileNameSpan) {
+            // UI feedback only; Laravel still validates file type, size, and storage after submit.
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     fileNameSpan.textContent = 'Selected: ' + this.files[0].name;

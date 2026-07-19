@@ -23,6 +23,7 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- Signup documents come from pending resident users and are served through protected file routes. --}}
                 @forelse ($registrationDocuments as $resident)
                     <tr>
                         <td>
@@ -72,6 +73,7 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- Resident uploads are private Document records; preview/download URLs check permissions before serving files. --}}
                 @forelse ($residentDocuments as $document)
                     <tr>
                         <td><strong>{{ $document->title }}</strong></td>

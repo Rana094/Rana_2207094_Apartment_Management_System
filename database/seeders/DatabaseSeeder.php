@@ -33,10 +33,11 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed realistic demo data for all portals and workflows.
      */
     public function run(): void
     {
+        // Remove older demo accounts before reseeding so repeated seeding stays predictable.
         User::whereIn('email', [
             'manager@gmail.com',
             'manger@nestora.com',
@@ -48,6 +49,7 @@ class DatabaseSeeder extends Seeder
             'avash@gmail.com',
         ])->delete();
 
+        // Core demo users for each portal role.
         $manager = $this->seedUser('manager', 'manager@nestora.com', 'manager', 'approved');
         $security = $this->seedUser('ruhan', 'security@nestora.com', 'security', 'approved');
         $maintenance = $this->seedUser('bipro', 'staff@nestora.com', 'staff', 'approved');
@@ -56,6 +58,7 @@ class DatabaseSeeder extends Seeder
         $shorif = $this->seedUser('shorif', 'shorif@nestora.com', 'resident', 'approved', 'owner', 'Building A, Flat 4D');
         $tenant = $this->seedUser('avash', 'avash@nestora.com', 'resident', 'pending_approval', 'tenant', 'Building A, Flat 3C');
 
+        // Building and flat data powers signup availability and manager flat management.
         $building = Building::updateOrCreate(
             ['code' => 'NEST-A'],
             [
@@ -119,6 +122,7 @@ class DatabaseSeeder extends Seeder
             'flat_info' => $building->name.', Flat '.$flatThree->flat_number,
         ]);
 
+        // Resident profiles connect approved residents to their active flats.
         $residentProfile = ResidentProfile::updateOrCreate(
             ['user_id' => $resident->id],
             [
@@ -254,6 +258,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Complaint and work order demonstrate resident-to-manager-to-staff maintenance flow.
         $complaint = Complaint::updateOrCreate(
             ['resident_id' => $resident->id, 'title' => 'Kitchen sink leakage'],
             [
@@ -286,6 +291,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Bills demonstrate unpaid, paid, overdue, and facility subscription payment states.
         Bill::updateOrCreate(
             ['bill_number' => 'BILL-2026-07-1A'],
             [
@@ -352,6 +358,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Visitor requests and logs demonstrate security check-in/check-out screens.
         VisitorRequest::updateOrCreate(
             ['access_code' => 'VISIT123'],
             [
@@ -409,6 +416,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Facilities demonstrate booking requests and manager approval/billing.
         $communityHall = Facility::updateOrCreate(
             ['name' => 'Community Hall'],
             [
@@ -596,9 +604,13 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Every unpaid bill gets a payment token for the Nestora Pay demo flow.
         Bill::where('status', '!=', 'paid')->get()->each(fn (Bill $bill) => PaymentGatewayController::sessionForBill($bill));
     }
 
+    /**
+     * Create or update one demo user; default password is "password".
+     */
     private function seedUser(
         string $name,
         string $email,

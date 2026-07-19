@@ -15,12 +15,14 @@
             <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ $errors->first() }}</div>
         @endif
 
+        {{-- Submits to ResidentPortalController@storeBooking after ResidentFacilityBookingMiddleware checks facility rules. --}}
         <form action="{{ route('resident.bookings.store') }}" method="POST">
             @csrf
             <div class="form-group">
                 <label for="booking-facility" class="form-label">Facility</label>
                 <select id="booking-facility" name="facility_id" class="form-control form-select" required>
                     <option value="">Select a facility</option>
+                    {{-- $facilities is loaded from ResidentPortalController@createBooking. --}}
                     @foreach ($facilities as $facility)
                         <option
                             value="{{ $facility->id }}"
@@ -88,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const startInput = document.getElementById('booking-start');
     const endInput = document.getElementById('booking-end');
     const takaIcon = @json(asset('icons/taka.png'));
+    // Backend endpoint: WeatherController@current returns OpenWeather data for rooftop safety.
     const weatherUrl = @json(route('resident.bookings.weather.current'));
     const syncFee = function () {
         const option = select.options[select.selectedIndex];
@@ -97,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         weatherPanel.style.display = name.includes('Rooftop') ? 'block' : 'none';
         gymPanel.style.display = name === 'Gym' ? 'block' : 'none';
+        // Gym is a monthly subscription, so backend stores a full-day placeholder time.
         timeFields.forEach((field) => field.style.display = name === 'Gym' ? 'none' : 'block');
         startInput.required = name !== 'Gym';
         endInput.required = name !== 'Gym';
@@ -109,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const fetchWeather = function () {
         weatherContent.textContent = 'Checking current weather...';
 
+        // Calls Laravel first; Laravel hides the API key and talks to OpenWeather server-side.
         fetch(weatherUrl, {
             headers: { 'Accept': 'application/json' },
         })

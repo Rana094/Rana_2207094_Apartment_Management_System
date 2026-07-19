@@ -9,6 +9,7 @@
     <table class="db-table">
         <thead><tr><th>Reference</th><th>Resident</th><th>Facility</th><th>Date & Time</th><th>Purpose</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
         <tbody>
+            {{-- ManagerPortalController@bookings supplies pending and historical facility booking requests. --}}
             @forelse($bookings as $booking)
                 <tr>
                     <td style="font-weight:700;">#BK-{{ $booking->id }}</td><td>{{ $booking->resident?->name ?? '-' }}</td><td>{{ $booking->facility?->name ?? '-' }}</td>
@@ -17,6 +18,7 @@
                     <td style="text-align:right;">
                         @if($booking->status === 'pending')
                             <div style="display:inline-flex;gap:.5rem;">
+                                {{-- Status changes are posted back to ManagerPortalController@updateBookingStatus. --}}
                                 <form method="POST" action="{{ route('manager.bookings.status',$booking) }}">@csrf<input type="hidden" name="status" value="approved"><button class="btn btn-primary btn-sm">Approve</button></form>
                                 <form id="reject-booking-{{ $booking->id }}" method="POST" action="{{ route('manager.bookings.status',$booking) }}">@csrf<input type="hidden" name="status" value="rejected"><button type="button" class="btn btn-danger btn-sm" onclick="showConfirmModal('Reject booking?', 'Reject this facility request?', function(){ document.getElementById('reject-booking-{{ $booking->id }}').submit(); }, true)">Reject</button></form>
                             </div>

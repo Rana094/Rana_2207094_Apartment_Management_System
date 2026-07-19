@@ -19,6 +19,7 @@
             <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ $errors->first() }}</div>
         @endif
 
+        {{-- This posts to MaintenancePortalController@update, which updates the work order and creates a resident-visible repair note. --}}
         <form action="{{ route('maintenance.orders.update', $workOrder) }}" method="POST" enctype="multipart/form-data">
             @csrf
 
@@ -42,6 +43,7 @@
 
             <div class="form-group">
                 <label class="form-label">Attach Completion Proof</label>
+                {{-- FileUploadService stores this proof privately; access should go through protected download routes. --}}
                 <div class="file-upload-wrapper" id="file-drop-area" style="padding: 1.5rem;">
                     <input type="file" id="work-photo" name="completion_photo" class="file-upload-input" accept=".pdf,.png,.jpg,.jpeg">
                     <div class="file-upload-placeholder">
@@ -67,6 +69,7 @@
         const fileNameSpan = document.getElementById('file-chosen-name');
 
         if (fileInput && fileNameSpan) {
+            // Frontend-only helper: the actual file validation and storage happen in Laravel after submit.
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     fileNameSpan.textContent = 'Selected File: ' + this.files[0].name;

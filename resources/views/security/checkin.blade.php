@@ -16,6 +16,7 @@
         <div class="card">
             <h3 style="margin-bottom: 1rem; font-size: 1.15rem;">Search Passcode</h3>
 
+            {{-- GET lookup asks SecurityPortalController@checkin to find an approved visitor request by access code. --}}
             <form action="{{ route('security.checkin') }}" method="GET" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
                 <input type="text" name="passcode" class="form-control" placeholder="Enter visitor access code" value="{{ request('passcode') }}" required style="font-weight: 700; text-transform: uppercase;">
                 <button type="submit" class="btn btn-primary">Search</button>
@@ -39,6 +40,7 @@
                     </div>
 
                     @if (! $visitor->checked_in_at)
+                        {{-- POST check-in stores timestamps and creates the visitor_logs record shown in the log registry. --}}
                         <form action="{{ route('security.checkin.store') }}" method="POST" style="margin-top: 1.5rem;">
                             @csrf
                             <input type="hidden" name="passcode" value="{{ $visitor->access_code }}">
@@ -65,6 +67,7 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem; font-size: 1.15rem;">Manual Walk-In Entry</h3>
 
+        {{-- Manual entry creates a visitor request and immediately logs the visitor as checked in. --}}
         <form action="{{ route('security.checkin.store') }}" method="POST">
             @csrf
 

@@ -122,6 +122,7 @@
             </div>
         @endif
 
+        {{-- Submits to AuthController@register; enctype is required for optional NID/lease file upload. --}}
         <form action="{{ route('register.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <!-- Full Name -->
@@ -186,6 +187,7 @@
                 
                 <div class="form-group">
                     <label class="form-label">Available Flat</label>
+                    {{-- $availableFlats comes from AuthController@showRegister using Flat::availableForSignup(). --}}
                     @if ($availableFlats->isNotEmpty())
                         <div class="flat-options">
                             @foreach ($availableFlats as $flat)
@@ -256,11 +258,13 @@
         }
 
         if (passwordInput && passwordConfirmInput) {
+            // Frontend check gives instant feedback; RegisterResidentRequest still validates on backend.
             passwordInput.addEventListener('input', validatePasswordMatch);
             passwordConfirmInput.addEventListener('input', validatePasswordMatch);
         }
         
         if (fileInput && fileNameSpan) {
+            // Only displays selected filename; the actual file is validated/stored by backend.
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     fileNameSpan.textContent = 'Selected: ' + this.files[0].name;

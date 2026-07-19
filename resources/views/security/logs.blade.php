@@ -26,6 +26,7 @@
             </tr>
         </thead>
         <tbody>
+            {{-- SecurityPortalController@logs paginates real VisitorLog records, not static sample rows. --}}
             @forelse ($logs as $log)
                 @php($visitor = $log->visitorRequest)
                 @php($isCheckIn = $log->event_type === 'check_in')
@@ -64,6 +65,7 @@
                         @endif
                     </td>
                     <td style="text-align: right;">
+                        {{-- Active visitors can be checked out directly from the log row using the same passcode lookup route. --}}
                         @if ($isInside && $log->access_code)
                             <a href="{{ route('security.checkout', ['passcode' => $log->access_code]) }}" class="btn btn-outline btn-sm">Check-Out</a>
                         @else

@@ -41,6 +41,7 @@
             </tr>
         </thead>
         <tbody>
+            {{-- ResidentPortalController@complaints loads only the logged-in resident's paginated complaint records. --}}
             @forelse ($complaints as $complaint)
                 <tr>
                     <td style="font-weight: 700;">#T-{{ $complaint->id }}</td>
@@ -61,6 +62,7 @@
                         </span>
                     </td>
                     <td style="text-align: right;">
+                        {{-- ComplaintPolicy protects this detail route so residents cannot open another resident's ticket. --}}
                         <a href="{{ route('resident.complaints.show', $complaint) }}" class="btn btn-outline btn-sm">View Status</a>
                     </td>
                 </tr>

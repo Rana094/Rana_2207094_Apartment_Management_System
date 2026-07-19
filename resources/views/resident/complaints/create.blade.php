@@ -16,6 +16,7 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem;">New Ticket Form</h3>
         
+        {{-- This form submits to ResidentPortalController@storeComplaint, where StoreComplaintRequest validates the ticket fields. --}}
         <form action="{{ route('resident.complaints.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
@@ -42,6 +43,7 @@
                 <!-- Urgency -->
                 <div class="form-group">
                     <label for="comp-urgency" class="form-label">Urgency Level</label>
+                    {{-- The request class maps this urgency input to the complaint priority saved in the database. --}}
                     <select id="comp-urgency" name="urgency" class="form-control form-select" required>
                         <option value="low">Low (Routine)</option>
                         <option value="medium" selected>Medium (Standard)</option>
@@ -99,6 +101,7 @@
         const fileNameSpan = document.getElementById('file-chosen-name');
         
         if (fileInput && fileNameSpan) {
+            // Frontend-only helper: shows the chosen file name before Laravel receives the form submission.
             fileInput.addEventListener('change', function() {
                 if (this.files && this.files.length > 0) {
                     fileNameSpan.textContent = 'Selected Image: ' + this.files[0].name;

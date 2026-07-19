@@ -2,6 +2,7 @@
 
 @php
     $status = $complaint->status;
+    // The newest work order is the current staff assignment created by the manager from this complaint.
     $assignedOrder = $complaint->workOrders->sortByDesc('created_at')->first();
 @endphp
 
@@ -43,6 +44,7 @@
             <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Discussion History</h3>
 
             <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                {{-- These messages are shared with maintenance staff through the complaint_messages table. --}}
                 @forelse ($complaint->messages as $message)
                     <div style="background-color: {{ $message->user_id === auth()->id() ? 'var(--primary-light)' : '#f1f5f9' }}; padding: 1rem; border-radius: var(--radius-md); align-self: {{ $message->user_id === auth()->id() ? 'flex-start' : 'flex-end' }}; max-width: 80%;">
                         <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary-color); margin-bottom: 0.25rem;">{{ $message->user?->name ?? 'User' }}</div>
@@ -54,6 +56,7 @@
                 @endforelse
             </div>
 
+            {{-- Posting here calls ResidentPortalController@storeComplaintMessage so staff can read the extra details. --}}
             <form action="{{ route('resident.complaints.messages.store', $complaint) }}" method="POST" style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
                 @csrf
                 <div class="form-group">
@@ -69,6 +72,7 @@
         <div class="card">
             <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Repair Updates</h3>
 
+            {{-- Staff remarks are saved as WorkOrderNote records and displayed here as resident-facing repair updates. --}}
             @forelse ($complaint->workOrders->flatMap->notes->sortByDesc('noted_at') as $note)
                 <div style="border-top: 1px solid var(--border-color); padding: 0.9rem 0;">
                     <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.35rem;">

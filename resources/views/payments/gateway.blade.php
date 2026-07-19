@@ -18,6 +18,7 @@
             <div class="card">
                 <h3 style="margin-bottom:1.25rem;">Payment Summary</h3>
 
+                {{-- PaymentGatewayController passes the Bill and PaymentTransaction so the amount cannot be changed from the browser. --}}
                 <div style="display:flex; flex-direction:column; gap:1rem; font-size:.95rem;">
                     <div style="display:flex; justify-content:space-between; gap:1rem;">
                         <span class="text-muted">Bill Number</span>
@@ -64,6 +65,7 @@
                         This is a local demo gateway. The amount is locked from the database, and confirming will mark this bill as paid for both resident and manager dashboards.
                     </p>
 
+                    {{-- Confirming posts the transaction token back to Laravel, which marks the bill/transaction as paid. --}}
                     <form method="POST" action="{{ route('payments.confirm', $transaction->payment_token) }}">
                         @csrf
                         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; font-size:1rem; padding:.9rem 1.25rem;">
@@ -84,6 +86,7 @@
         window.addEventListener('pageshow', (event) => {
             const navigation = performance.getEntriesByType('navigation')[0];
 
+            // Prevents a stale browser back-button page from showing an already-paid transaction as still payable.
             if (event.persisted || navigation?.type === 'back_forward') {
                 window.location.reload();
             }

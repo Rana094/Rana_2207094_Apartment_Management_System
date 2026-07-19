@@ -17,7 +17,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public Front-Facing Routes
+// Public front-facing routes do not require login.
 Route::get('/', function () {
     return view('landing');
 });
@@ -32,6 +32,7 @@ Route::get('/contact', function () {
 Route::get('/contact/map', [LocationController::class, 'apartmentMap'])->name('contact.map');
 
 Route::post('/contact', function (Request $request) {
+    // Store public contact messages and notify managers inside the portal.
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
         'email' => ['required', 'email', 'max:255'],
@@ -66,15 +67,16 @@ Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:6,1')
     ->name('login.store');
 
-// Authentication Routes
+// Guest-only authentication routes, mainly registration.
 Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register.store');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// Authenticated Portal Entry Routes
+// All portal routes below require login and manager approval.
 Route::middleware(['auth', 'approved'])->group(function () {
+    // Shared notification and private-file routes are used by multiple portal roles.
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
@@ -87,6 +89,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('payments.')
         ->middleware(['role:resident', 'residentpaymenttransactionmiddleware', 'residentpaymenttransactionnocachemiddleware'])
         ->group(function () {
+            // Payment routes are protected by token ownership, no-cache, paid/expired checks.
             Route::get('/{token}', [PaymentGatewayController::class, 'show'])
                 ->middleware('residentpaymenttransactionredirectpaidmiddleware')
                 ->name('show');
@@ -106,6 +109,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('resident.')
         ->middleware('role:resident')
         ->group(function () {
+            // Resident portal: flat profile, bills, complaints, visitors, bookings, documents, and move-out.
             Route::get('/flat', [ResidentPortalController::class, 'flat'])->name('flat');
             Route::post('/vehicles', [ResidentPortalController::class, 'storeVehicle'])->name('vehicles.store');
             Route::get('/bills', [ResidentPortalController::class, 'bills'])->name('bills.index');
@@ -148,6 +152,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('security.')
         ->middleware('role:security')
         ->group(function () {
+            // Security portal: visitor gate flow, logs, emergencies, and incident reports.
             Route::get('/dashboard', [SecurityPortalController::class, 'dashboard'])->name('dashboard');
             Route::get('/checkin', [SecurityPortalController::class, 'checkin'])->name('checkin');
             Route::post('/checkin', [SecurityPortalController::class, 'storeCheckin'])->name('checkin.store');
@@ -165,6 +170,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('maintenance.')
         ->middleware('role:staff')
         ->group(function () {
+            // Maintenance portal: assigned work orders, status updates, repair history, and profile.
             Route::get('/', [MaintenancePortalController::class, 'dashboard'])->name('dashboard');
             Route::get('/dashboard', [MaintenancePortalController::class, 'dashboard']);
             Route::get('/work-orders', [MaintenancePortalController::class, 'workOrders'])->name('work-orders');
@@ -185,6 +191,7 @@ Route::middleware(['auth', 'approved'])->group(function () {
         ->name('manager.')
         ->middleware('role:manager')
         ->group(function () {
+            // Manager portal: approvals, residents, flats, billing, complaints, staff, bookings, notices.
             Route::get('/resident-approvals', [ResidentApprovalController::class, 'index'])
                 ->name('resident-approvals.index');
             Route::post('/resident-approvals/{resident}/approve', [ResidentApprovalController::class, 'approve'])

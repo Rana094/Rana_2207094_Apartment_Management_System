@@ -62,6 +62,7 @@
 
         <div class="card">
             <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">Resident Complaint Messages</h3>
+            {{-- Shows resident replies from complaint_messages so the technician sees extra details before working. --}}
             @forelse ($workOrder->complaint?->messages ?? collect() as $message)
                 <div style="border-top: 1px solid var(--border-color); padding: 0.75rem 0;">
                     <strong>{{ $message->user?->name ?? 'Resident' }}</strong>
@@ -85,6 +86,7 @@
 
         <div class="card">
             <h3 style="font-size: 1.15rem; margin-bottom: 1.25rem;">Repair Notes</h3>
+            {{-- These notes come from the staff update form and are also visible on the resident complaint page. --}}
             @forelse ($workOrder->notes as $note)
                 <div style="border-top: 1px solid var(--border-color); padding: 0.75rem 0;">
                     <strong>{{ str_replace('_', ' ', $note->status) }}</strong>
