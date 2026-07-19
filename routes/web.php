@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\FileAccessController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Maintenance\MaintenancePortalController;
@@ -60,7 +59,7 @@ Route::get('/dashboard-preview', function () {
     return view('dashboard-preview', compact('role'));
 });
 
-Route::get('/waiting-approval', [EmailVerificationController::class, 'notice'])->name('approval.pending');
+Route::view('/waiting-approval', 'waiting-approval')->name('approval.pending');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])
@@ -73,16 +72,6 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-
-Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', [EmailVerificationController::class, 'notice'])->name('verification.notice');
-    Route::get('/email/verify/{id}/{hash}', [EmailVerificationController::class, 'verify'])
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-    Route::post('/email/verification-notification', [EmailVerificationController::class, 'resend'])
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
-});
 
 // Authenticated Portal Entry Routes
 Route::middleware(['auth', 'approved'])->group(function () {

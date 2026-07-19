@@ -33,7 +33,16 @@
                         {{ $resident->name }}
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">{{ $resident->email }} | {{ $resident->phone }}</div>
                     </td>
-                    <td style="font-weight: 600;">{{ $resident->flat_info ?? 'Not Assigned' }}</td>
+                    <td style="font-weight: 600;">
+                        @if ($resident->requestedFlat)
+                            {{ $resident->requestedFlat->building?->name ?? 'Building' }}, Flat {{ $resident->requestedFlat->flat_number }}
+                            <div class="text-xs" style="color: var(--text-muted); font-weight: normal;">
+                                {{ ucfirst($resident->requestedFlat->status) }}
+                            </div>
+                        @else
+                            {{ $resident->flat_info ?? 'Not Assigned' }}
+                        @endif
+                    </td>
                     <td>
                         @if (($resident->resident_type ?? 'tenant') === 'owner')
                             <span class="badge badge-approved" style="background-color: #dcfce7; color: #15803d;">Owner occupied</span>

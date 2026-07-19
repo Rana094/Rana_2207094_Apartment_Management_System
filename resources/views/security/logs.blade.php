@@ -1,90 +1,98 @@
 @extends('layouts.dashboard')
 
-@section('title', 'Visitor Logs Registry — Nestora')
+@section('title', 'Visitor Logs Registry - Nestora')
 
 @section('content')
 <div class="db-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h1 class="db-title">Visitor Logs Directory</h1>
-        <p class="db-subtitle">Complete historical log of all visitor entries, exits, and pre-approved gate clearances.</p>
+        <p class="db-subtitle">Complete historical log of all visitor entries and exits.</p>
     </div>
-    
-    <a href="{{ url('/security/checkin') }}" class="btn btn-primary">Register Walk-In Visitor</a>
+
+    <a href="{{ route('security.checkin') }}" class="btn btn-primary">Register Walk-In Visitor</a>
 </div>
 
-<!-- Logs Table -->
 <div class="table-responsive">
-    <div class="table-toolbar">
-        <div class="table-toolbar-left">
-            <input type="text" class="form-control" placeholder="Search by name, flat, phone..." style="max-width: 250px;">
-            <select class="form-control form-select" style="max-width: 180px;">
-                <option value="">All Categories</option>
-                <option value="guest">Guest</option>
-                <option value="delivery">Delivery</option>
-                <option value="service">Service</option>
-            </select>
-            <select class="form-control form-select" style="max-width: 180px;">
-                <option value="">All Statuses</option>
-                <option value="inside">Currently Inside</option>
-                <option value="completed">Checked Out</option>
-                <option value="scheduled">Scheduled</option>
-            </select>
-        </div>
-    </div>
-    
     <table class="db-table">
         <thead>
             <tr>
-                <th>Visitor Applicant</th>
+                <th>Visitor</th>
                 <th>Destination Unit</th>
                 <th>Category</th>
                 <th>Pass Code</th>
-                <th>Check-In Timestamps</th>
+                <th>Timestamp</th>
                 <th>Status</th>
                 <th style="text-align: right;">Action</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td style="font-weight: 600;">
-                    Farhan Alvi
-                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">+880 1812 998877</div>
-                </td>
-                <td style="font-weight: 600;">Flat 3B — ullas</td>
-                <td>Delivery (Foodpanda)</td>
-                <td><code style="background-color: var(--bg-main); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">N-5509</code></td>
-                <td>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">In: Today, 10:12 AM<br>Out: —</span>
-                </td>
-                <td><span class="badge badge-unpaid" style="background-color: var(--secondary-light); color: var(--secondary-color);">inside</span></td>
-                <td style="text-align: right;">
-                    <a href="{{ url('/security/checkout?passcode=N-5509') }}" class="btn btn-outline btn-sm">Check-Out</a>
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: 600;">
-                    Ahmad Sufian
-                    <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">+880 1723 445566</div>
-                </td>
-                <td style="font-weight: 600;">Flat 3B — ullas</td>
-                <td>Guest (Relative)</td>
-                <td><code style="background-color: var(--bg-main); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">N-2311</code></td>
-                <td>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">In: Yesterday, 10:12 AM<br>Out: Yesterday, 02:40 PM</span>
-                </td>
-                <td><span class="badge badge-completed">checked out</span></td>
-                <td style="text-align: right;">
-                    <span class="text-muted text-xs">Closed</span>
-                </td>
-            </tr>
+            @forelse ($logs as $log)
+                @php($visitor = $log->visitorRequest)
+                @php($isCheckIn = $log->event_type === 'check_in')
+                @php($isInside = $visitor && $visitor->checked_in_at && ! $visitor->checked_out_at)
+                <tr>
+                    <td style="font-weight: 600;">
+                        {{ $log->visitor_name }}
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">{{ $log->visitor_phone ?? '-' }}</div>
+                    </td>
+                    <td style="font-weight: 600;">
+                        {{ $log->flat?->building?->name ? $log->flat->building->name.' - ' : '' }}{{ $log->flat?->flat_number ? 'Flat '.$log->flat->flat_number : 'Unassigned' }}
+                        @if ($visitor?->resident)
+                            <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">{{ $visitor->resident->name }}</div>
+                        @endif
+                    </td>
+                    <td>{{ ucfirst(strtok((string) $log->purpose, ':') ?: 'visitor') }}</td>
+                    <td>
+                        @if ($log->access_code)
+                            <code style="background-color: var(--bg-main); padding: 0.2rem 0.4rem; border-radius: var(--radius-sm); font-weight: 700;">{{ $log->access_code }}</code>
+                        @else
+                            <span class="text-muted text-xs">No code</span>
+                        @endif
+                    </td>
+                    <td>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">
+                            {{ $isCheckIn ? 'In' : 'Out' }}: {{ $log->occurred_at?->format('M d, Y h:i A') ?? '-' }}
+                        </span>
+                    </td>
+                    <td>
+                        @if ($isInside)
+                            <span class="badge badge-unpaid" style="background-color: var(--secondary-light); color: var(--secondary-color);">inside</span>
+                        @elseif ($isCheckIn)
+                            <span class="badge badge-approved">checked in</span>
+                        @else
+                            <span class="badge badge-completed">checked out</span>
+                        @endif
+                    </td>
+                    <td style="text-align: right;">
+                        @if ($isInside && $log->access_code)
+                            <a href="{{ route('security.checkout', ['passcode' => $log->access_code]) }}" class="btn btn-outline btn-sm">Check-Out</a>
+                        @else
+                            <span class="text-muted text-xs">Closed</span>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                        No visitor logs found.
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
-    
+
     <div class="table-pagination">
-        <div class="pagination-info">Showing <strong>2</strong> records of <strong>320</strong> total visitor entries</div>
+        <div class="pagination-info">
+            Showing <strong>{{ $logs->firstItem() ?? 0 }}-{{ $logs->lastItem() ?? 0 }}</strong>
+            records of <strong>{{ $logs->total() }}</strong> total visitor entries
+        </div>
         <div class="pagination-btns">
-            <button type="button" class="btn btn-outline btn-sm" disabled>Previous</button>
-            <button type="button" class="btn btn-outline btn-sm">Next</button>
+            @if ($logs->previousPageUrl())
+                <a href="{{ $logs->previousPageUrl() }}" class="btn btn-outline btn-sm">Previous</a>
+            @endif
+            @if ($logs->nextPageUrl())
+                <a href="{{ $logs->nextPageUrl() }}" class="btn btn-outline btn-sm">Next</a>
+            @endif
         </div>
     </div>
 </div>
