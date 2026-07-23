@@ -51,6 +51,17 @@ class PublicPagesTest extends TestCase
     }
 
     /**
+     * Test that the forgot password page renders successfully.
+     */
+    public function test_forgot_password_page_renders_successfully(): void
+    {
+        $response = $this->get('/forgot-password');
+        $response->assertStatus(200);
+        $response->assertSee('Forgot Password');
+        $response->assertSee('Send Reset Link');
+    }
+
+    /**
      * Test that the registration page renders successfully.
      */
     public function test_register_page_renders_successfully(): void

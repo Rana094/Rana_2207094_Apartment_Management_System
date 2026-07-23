@@ -16,6 +16,14 @@
     <p class="db-subtitle">Update your account details and password credentials.</p>
 </div>
 
+@if (session('status'))
+    <div class="alert alert-success" style="margin-bottom:1rem;">{{ session('status') }}</div>
+@endif
+
+@if ($errors->any())
+    <div class="alert alert-danger" style="margin-bottom:1rem;">{{ $errors->first() }}</div>
+@endif
+
 <div class="grid grid-3" style="align-items: start; gap: 2rem;">
     <div class="card" style="grid-column: span 1; text-align: center; padding: 2.5rem 1.5rem;">
         <div class="db-sidebar-avatar" style="width: 5rem; height: 5rem; font-size: 1.75rem; margin: 0 auto 1rem auto; background-color: var(--primary-color);">
@@ -39,7 +47,13 @@
 
     <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 2rem;">
         <div class="card">
-            <h3 style="font-size: 1.2rem; margin-bottom: 1.25rem;">General Information</h3>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:1.25rem;">
+                <div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: .25rem;">Edit Profile</h3>
+                    <p style="font-size:.9rem; color:var(--text-secondary); margin:0;">Update your basic contact information and emergency contact details.</p>
+                </div>
+                <span class="badge badge-approved">Editable</span>
+            </div>
 
             <form action="{{ $profileRoute }}" method="POST">
                 @csrf

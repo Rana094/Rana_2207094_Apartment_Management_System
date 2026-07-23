@@ -106,7 +106,7 @@
                     <input type="checkbox" name="remember" class="form-checkbox">
                     Remember me
                 </label>
-                <a href="{{ route('contact') }}" style="font-weight: 500; font-size: 0.85rem;">Forgot Password?</a>
+                <a href="{{ route('password.request') }}" style="font-weight: 500; font-size: 0.85rem;">Forgot Password?</a>
             </div>
             
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-bottom: 1.5rem;">

@@ -9,6 +9,7 @@ use App\Http\Controllers\Maintenance\MaintenancePortalController;
 use App\Http\Controllers\Manager\ManagerPortalController;
 use App\Http\Controllers\Manager\ResidentApprovalController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\Resident\ResidentPortalController;
 use App\Http\Controllers\Security\SecurityPortalController;
@@ -66,6 +67,18 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])
     ->middleware('throttle:6,1')
     ->name('login.store');
+Route::get('/forgot-password', [PasswordResetController::class, 'create'])
+    ->middleware('guest')
+    ->name('password.request');
+Route::post('/forgot-password', [PasswordResetController::class, 'store'])
+    ->middleware(['guest', 'throttle:6,1'])
+    ->name('password.email');
+Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])
+    ->middleware('guest')
+    ->name('password.reset');
+Route::post('/reset-password', [PasswordResetController::class, 'update'])
+    ->middleware(['guest', 'throttle:6,1'])
+    ->name('password.update');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
