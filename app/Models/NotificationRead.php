@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Per-user read marker for broadcast notifications.
+ */
 class NotificationRead extends Model
 {
     use HasFactory;

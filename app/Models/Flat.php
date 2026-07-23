@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 
 class Flat extends Model
 {
@@ -13,14 +14,41 @@ class Flat extends Model
 
     protected $guarded = [];
 
+    /**
+     * Building that contains this flat.
+     */
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
     }
 
+    /**
+     * Resident profiles currently or historically linked to the flat.
+     */
     public function residentProfiles(): HasMany
     {
         return $this->hasMany(ResidentProfile::class);
+    }
+
+    /**
+     * Pending signup users who selected this flat before approval.
+     */
+    public function pendingResidentRequests(): HasMany
+    {
+        return $this->hasMany(User::class, 'requested_flat_id')
+            ->where('role', 'resident')
+            ->whereIn('status', ['pending_verification', 'pending_approval']);
+    }
+
+    /**
+     * Flats selectable during signup: vacant, no active resident, no pending request.
+     */
+    public function scopeAvailableForSignup(Builder $query): Builder
+    {
+        return $query
+            ->where('status', 'vacant')
+            ->whereDoesntHave('residentProfiles', fn (Builder $profile) => $profile->where('status', 'active'))
+            ->whereDoesntHave('pendingResidentRequests');
     }
 
     public function documents(): HasMany

@@ -78,7 +78,17 @@
                 <thead><tr><th>Document</th><th>Type</th><th>Status</th><th style="text-align: right;">Action</th></tr></thead>
                 <tbody>
                 @forelse ($resident->documents as $document)
-                    <tr><td><strong>{{ $document->title }}</strong></td><td>{{ str_replace('_', ' ', ucfirst($document->type)) }}</td><td><span class="badge badge-pending-verification">{{ str_replace('_', ' ', ucfirst($document->status)) }}</span></td><td style="text-align: right;"><a href="{{ $document->secureUrl() }}" class="btn btn-outline btn-sm">View</a></td></tr>
+                    <tr>
+                        <td><strong>{{ $document->title }}</strong></td>
+                        <td>{{ str_replace('_', ' ', ucfirst($document->type)) }}</td>
+                        <td><span class="badge badge-pending-verification">{{ str_replace('_', ' ', ucfirst($document->status)) }}</span></td>
+                        <td style="text-align: right;">
+                            @if ($document->isPreviewable())
+                                <a href="{{ $document->previewUrl() }}" class="btn btn-outline btn-sm" target="_blank" rel="noopener">Open</a>
+                            @endif
+                            <a href="{{ $document->secureUrl() }}" class="btn btn-outline btn-sm">Download</a>
+                        </td>
+                    </tr>
                 @empty
                     <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No documents uploaded.</td></tr>
                 @endforelse

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Approved resident's flat assignment and household profile.
+ */
 class ResidentProfile extends Model
 {
     use HasFactory;

@@ -2,14 +2,19 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 class WeatherService
 {
+    /**
+     * Fetch current weather from OpenWeather for facility booking guidance.
+     */
     public function current(?float $lat = null, ?float $lon = null): array
     {
         $apiKey = config('services.openweather.api_key');
 
+        // Keep the UI stable when the API key is missing instead of throwing an exception.
         if (! $apiKey) {
             return [
                 'available' => false,
@@ -17,22 +22,36 @@ class WeatherService
             ];
         }
 
-        $location = null;
-
         if ($lat === null || $lon === null) {
-            $location = $this->currentIpLocation();
-            $lat = $location['lat'] ?? (float) config('services.openweather.default_lat');
-            $lon = $location['lon'] ?? (float) config('services.openweather.default_lon');
+            // Default coordinates point to the apartment area for rooftop booking checks.
+            $lat = (float) config('services.openweather.default_lat');
+            $lon = (float) config('services.openweather.default_lon');
         }
 
-        $response = Http::timeout(8)->get('https://api.openweathermap.org/data/2.5/weather', [
-            'lat' => $lat,
-            'lon' => $lon,
-            'appid' => $apiKey,
-            'units' => 'metric',
-        ]);
+        try {
+            // Network APIs can fail offline, so catch connection errors and return a friendly response.
+            $response = Http::timeout(8)->get('https://api.openweathermap.org/data/2.5/weather', [
+                'lat' => $lat,
+                'lon' => $lon,
+                'appid' => $apiKey,
+                'units' => 'metric',
+            ]);
+        } catch (ConnectionException) {
+            return [
+                'available' => false,
+                'message' => 'Weather service could not be reached. Check your internet connection and try again.',
+            ];
+        }
 
         if (! $response->successful()) {
+            if ($response->status() === 401) {
+                // 401 specifically means the configured OpenWeather key is invalid or inactive.
+                return [
+                    'available' => false,
+                    'message' => 'OpenWeather rejected the API key. Check OPENWEATHER_API_KEY in .env.',
+                ];
+            }
+
             return [
                 'available' => false,
                 'message' => 'Weather data is temporarily unavailable.',
@@ -46,9 +65,10 @@ class WeatherService
         $feelsLike = $payload['main']['feels_like'] ?? null;
         $wind = $payload['wind']['speed'] ?? null;
 
+        // Return only the fields the booking page needs instead of exposing the whole API payload.
         return [
             'available' => true,
-            'location' => $payload['name'] ?? $location['city'] ?? 'Current area',
+            'location' => $payload['name'] ?? 'Apartment area',
             'condition' => $condition,
             'description' => ucfirst($description),
             'temperature' => $temp,
@@ -56,23 +76,13 @@ class WeatherService
             'humidity' => $payload['main']['humidity'] ?? null,
             'wind_speed' => $wind,
             'safety_message' => $this->safetyMessage($condition, $temp, $wind),
-            'source' => $location ? 'ip-api' : 'configured coordinates',
+            'source' => 'configured coordinates',
         ];
     }
 
-    private function currentIpLocation(): ?array
-    {
-        $response = Http::timeout(8)->get('http://ip-api.com/json/', [
-            'fields' => 'status,message,city,regionName,country,lat,lon,query',
-        ]);
-
-        if (! $response->successful() || $response->json('status') !== 'success') {
-            return null;
-        }
-
-        return $response->json();
-    }
-
+    /**
+     * Convert raw weather conditions into a simple facility-use safety message.
+     */
     private function safetyMessage(string $condition, mixed $temp, mixed $wind): string
     {
         $condition = strtolower($condition);

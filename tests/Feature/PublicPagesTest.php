@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PublicPagesTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Test that the landing page renders successfully.
      */
@@ -79,6 +82,6 @@ class PublicPagesTest extends TestCase
         $response = $this->get('/waiting-approval');
         $response->assertStatus(200);
         $response->assertSee('Account Registration Submitted');
-        $response->assertSee('verification and manager approval');
+        $response->assertSee('waiting for manager approval');
     }
 }

@@ -8,21 +8,34 @@ use App\Models\User;
 use App\Models\WorkOrderNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class FileAccessController extends Controller
 {
+    /**
+     * Serve an uploaded resident document after policy authorization.
+     */
     public function document(Request $request, Document $document): BinaryFileResponse
     {
         $this->authorize('view', $document);
 
-        return $this->download($document->file_path, $document->title);
+        return $this->serve(
+            $document->file_path,
+            $document->title,
+            $document->mime_type,
+            $request->boolean('preview') && $document->isPreviewable()
+        );
     }
 
+    /**
+     * Serve the document uploaded during signup to the resident or a manager.
+     */
     public function residentSignupDocument(Request $request, User $resident): BinaryFileResponse
     {
         $user = $request->user();
 
+        // Signup documents are private; only the owner resident and managers may access them.
         abort_unless(
             $user->role === 'manager' || $resident->id === $user->id,
             403
@@ -31,35 +44,74 @@ class FileAccessController extends Controller
         $documentPath = $resident->document_path;
         abort_unless(is_string($documentPath) && $documentPath !== '', 404);
 
-        return $this->download($documentPath, $resident->name.' verification document');
+        return $this->serve($documentPath, $resident->name.' verification document', inline: $request->boolean('preview'));
     }
 
+    /**
+     * Serve a resident's uploaded payment proof after permission checks.
+     */
     public function paymentProof(Request $request, PaymentProof $paymentProof): BinaryFileResponse
     {
         $this->authorize('view', $paymentProof);
 
-        return $this->download($paymentProof->file_path, 'payment-proof-'.$paymentProof->id);
+        return $this->serve($paymentProof->file_path, 'payment-proof-'.$paymentProof->id, $paymentProof->mime_type);
     }
 
+    /**
+     * Serve maintenance completion proof linked to a work order note.
+     */
     public function workOrderProof(Request $request, WorkOrderNote $note): BinaryFileResponse
     {
         $user = $request->user();
         $workOrder = $note->workOrder()->with('complaint')->firstOrFail();
 
+        // Reuse work-order permissions so assigned staff, resident, and manager rules stay consistent.
         $this->authorize('view', $workOrder);
 
         $proofPath = $note->proof_path;
         abort_unless(is_string($proofPath) && $proofPath !== '', 404);
 
-        return $this->download($proofPath, 'work-order-proof-'.$note->id);
+        return $this->serve($proofPath, 'work-order-proof-'.$note->id);
     }
 
-    private function download(string $path, string $name): BinaryFileResponse
+    /**
+     * Read a private upload from disk and return it either inline or as a download.
+     */
+    private function serve(string $path, string $name, ?string $mimeType = null, bool $inline = false): BinaryFileResponse
     {
         $disk = Storage::disk('private_uploads');
 
         abort_unless($disk->exists($path), 404);
 
-        return response()->download($disk->path($path), $name);
+        $absolutePath = $disk->path($path);
+        $fileName = $this->downloadName($name, $path);
+        $headers = array_filter([
+            'Content-Type' => $mimeType ?: $disk->mimeType($path),
+        ]);
+
+        if ($inline) {
+            // Inline preview lets browsers display supported PDFs/images instead of downloading.
+            $headers['Content-Disposition'] = 'inline; filename="'.$fileName.'"';
+
+            return response()->file($absolutePath, $headers);
+        }
+
+        return response()->download($absolutePath, $fileName, $headers);
+    }
+
+    /**
+     * Build a safe download filename and preserve the stored file extension.
+     */
+    private function downloadName(string $name, string $path): string
+    {
+        $fileName = trim(str_replace(['/', '\\', '"'], '-', $name));
+        $fileName = $fileName !== '' ? $fileName : 'document';
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+        if ($extension !== '' && Str::lower(pathinfo($fileName, PATHINFO_EXTENSION)) !== Str::lower($extension)) {
+            $fileName .= '.'.$extension;
+        }
+
+        return $fileName;
     }
 }

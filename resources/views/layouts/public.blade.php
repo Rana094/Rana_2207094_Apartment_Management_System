@@ -20,7 +20,7 @@
     @php
         $publicUser = auth()->user();
         $portalUrl = $publicUser
-            ? ($publicUser->hasVerifiedEmail() && $publicUser->isApproved()
+            ? ($publicUser->isApproved()
                 ? route($publicUser->dashboardRouteName())
                 : route('approval.pending'))
             : null;

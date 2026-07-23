@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use App\Notifications\BrevoVerifyEmail;
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,9 +25,10 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property string|null $resident_type
  * @property string|null $flat_info
+ * @property int|null $requested_flat_id
  * @property string|null $document_path
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -48,6 +48,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'status',
         'resident_type',
         'flat_info',
+        'requested_flat_id',
         'document_path',
         'approved_at',
         'approved_by',
@@ -83,16 +84,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'resident';
     }
 
-    public function sendEmailVerificationNotification(): void
-    {
-        $this->notify(new BrevoVerifyEmail);
-    }
-
+    /**
+     * A user becomes portal-ready only after manager approval.
+     */
     public function isApproved(): bool
     {
         return $this->status === 'approved' && $this->approved_at !== null;
     }
 
+    /**
+     * Resolve the correct dashboard route based on user role.
+     */
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
@@ -103,11 +105,25 @@ class User extends Authenticatable implements MustVerifyEmail
         };
     }
 
+    /**
+     * Approved resident details such as assigned flat and emergency contact.
+     */
     public function residentProfile(): HasOne
     {
         return $this->hasOne(ResidentProfile::class);
     }
 
+    /**
+     * Flat selected during signup before manager approval.
+     */
+    public function requestedFlat(): BelongsTo
+    {
+        return $this->belongsTo(Flat::class, 'requested_flat_id');
+    }
+
+    /**
+     * Staff/security profile information for employee accounts.
+     */
     public function staffProfile(): HasOne
     {
         return $this->hasOne(StaffProfile::class);
@@ -168,16 +184,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(SecurityIncident::class, 'reported_by');
     }
 
+    /**
+     * Secure URL for the signup document uploaded before approval.
+     */
     public function signupDocumentUrl(): ?string
     {
         return $this->document_path ? route('files.resident-signup.show', $this) : null;
     }
 
+    /**
+     * Maintenance work orders assigned to this user when they are staff.
+     */
     public function assignedWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_to');
     }
 
+    /**
+     * Work orders created by this user when they are a manager.
+     */
     public function createdWorkOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class, 'assigned_by');

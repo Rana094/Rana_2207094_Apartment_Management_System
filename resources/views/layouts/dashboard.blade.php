@@ -1,5 +1,5 @@
 @php
-    // Auto-detect role from path if not explicitly provided
+    // Auto-detect role from path if not explicitly provided by the controller/view.
     if (!isset($role)) {
         if (Request::is('resident*')) {
             $role = 'resident';
@@ -10,7 +10,7 @@
         } elseif (Request::is('maintenance*')) {
             $role = 'staff';
         } else {
-            $role = 'resident'; // Default fallback
+            $role = 'resident'; // Default fallback for shared preview/legacy pages.
         }
     }
 
@@ -70,6 +70,7 @@
         <!-- Sidebar Navigation Menu links -->
         <ul class="db-sidebar-menu">
             @if($role === 'resident')
+                {{-- These route links map directly to the resident route group in routes/web.php. --}}
                 <!-- RESIDENT MENU -->
                 <li class="db-menu-label">Resident Hub</li>
                 <li class="db-menu-item">
@@ -124,6 +125,7 @@
                 </li>
 
             @elseif($role === 'manager')
+                {{-- Manager menu links are protected by role:manager middleware. --}}
                 <!-- MANAGER MENU -->
                 <li class="db-menu-label">Management Hub</li>
                 <li class="db-menu-item">
@@ -195,6 +197,7 @@
                     </a>
                 </li>
             @elseif($role === 'security')
+                {{-- Security menu links are protected by role:security middleware. --}}
                 <!-- SECURITY GUARD MENU -->
                 <li class="db-menu-label">Security Desk</li>
                 <li class="db-menu-item">
@@ -228,6 +231,7 @@
                     </a>
                 </li>
             @elseif($role === 'staff')
+                {{-- Maintenance menu links are protected by role:staff middleware. --}}
                 <!-- MAINTENANCE STAFF MENU -->
                 <li class="db-menu-label">Technician Desk</li>
                 <li class="db-menu-item">
@@ -328,6 +332,7 @@
                             </div>
                             <p style="font-size: 0.775rem; margin-bottom: 0; line-height: 1.4; color: var(--text-secondary);">Your guest "Ahmad Sufian" has checked in at Main Gate.</p>
                         </div>
+                        {{-- Full notification data comes from NotificationController@index. --}}
                         <a href="{{ route('notifications.index') }}" style="text-align: center; display: block; padding: 0.75rem; font-size: 0.8rem; font-weight: 600;">View All Notifications</a>
                     </div>
                 </div>
@@ -437,7 +442,7 @@
             });
         });
 
-        // 3. Reusable Confirmation Modal Helper
+        // 3. Reusable Confirmation Modal Helper used by pages before submitting destructive backend actions.
         window.showConfirmModal = function(title, desc, confirmCallback, isDanger = true) {
             const overlay = document.getElementById('confirm-modal-overlay');
             const titleElem = document.getElementById('confirm-modal-title');

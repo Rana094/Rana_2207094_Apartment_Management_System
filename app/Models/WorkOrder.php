@@ -19,6 +19,8 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $due_at
  * @property Carbon|null $completed_at
+ *
+ * Staff-facing maintenance task created from a resident complaint.
  */
 class WorkOrder extends Model
 {

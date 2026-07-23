@@ -27,13 +27,23 @@
             </tr>
         </thead>
         <tbody>
+            {{-- ResidentApprovalController@index lists pending signup users, including their requested flat and signup document. --}}
             @forelse ($residents as $resident)
                 <tr>
                     <td style="font-weight: 600;">
                         {{ $resident->name }}
                         <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">{{ $resident->email }} | {{ $resident->phone }}</div>
                     </td>
-                    <td style="font-weight: 600;">{{ $resident->flat_info ?? 'Not Assigned' }}</td>
+                    <td style="font-weight: 600;">
+                        @if ($resident->requestedFlat)
+                            {{ $resident->requestedFlat->building?->name ?? 'Building' }}, Flat {{ $resident->requestedFlat->flat_number }}
+                            <div class="text-xs" style="color: var(--text-muted); font-weight: normal;">
+                                {{ ucfirst($resident->requestedFlat->status) }}
+                            </div>
+                        @else
+                            {{ $resident->flat_info ?? 'Not Assigned' }}
+                        @endif
+                    </td>
                     <td>
                         @if (($resident->resident_type ?? 'tenant') === 'owner')
                             <span class="badge badge-approved" style="background-color: #dcfce7; color: #15803d;">Owner occupied</span>
@@ -56,6 +66,7 @@
                     <td style="text-align: right;">
                         <div style="display: inline-flex; gap: 0.5rem;">
                             <!-- Approve Action -->
+                            {{-- Approval creates the resident profile, links the requested flat, and marks that flat as occupied. --}}
                             <form method="POST" action="{{ route('manager.resident-approvals.approve', $resident) }}">
                                 @csrf
                                 <button type="submit" class="btn btn-primary btn-sm">Approve</button>
@@ -68,6 +79,7 @@
                             }, true)">Reject</button>
                             
                             <!-- Hidden Rejection Form -->
+                            {{-- Rejection denies portal access and releases the requested flat for another signup. --}}
                             <form method="POST" id="reject-form-{{ $resident->id }}" action="{{ route('manager.resident-approvals.reject', $resident) }}" style="display: none;">
                                 @csrf
                             </form>

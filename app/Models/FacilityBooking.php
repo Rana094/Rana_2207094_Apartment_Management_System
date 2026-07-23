@@ -17,6 +17,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $purpose
  * @property string $status
  */
+/**
+ * Resident request to book or subscribe to a shared facility.
+ */
 class FacilityBooking extends Model
 {
     use HasFactory;

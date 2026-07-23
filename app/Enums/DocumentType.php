@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * Allowed categories for uploaded resident/maintenance documents.
+ */
 enum DocumentType: string
 {
     case NationalId = 'national_id';

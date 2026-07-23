@@ -19,6 +19,9 @@ use Illuminate\View\View;
 
 class SecurityPortalController extends Controller
 {
+    /**
+     * Show security dashboard counts for today's visitor and emergency activity.
+     */
     public function dashboard(Request $request): View
     {
         return view('security.dashboard', [
@@ -33,6 +36,9 @@ class SecurityPortalController extends Controller
         ]);
     }
 
+    /**
+     * Show visitor check-in page and optionally load a passcode search result.
+     */
     public function checkin(Request $request): View
     {
         $passcode = $request->string('passcode')->upper()->toString();
@@ -44,6 +50,9 @@ class SecurityPortalController extends Controller
         ]);
     }
 
+    /**
+     * Check in a pre-approved visitor by passcode or create a manual walk-in entry.
+     */
     public function storeCheckin(Request $request): RedirectResponse
     {
         if ($request->filled('passcode')) {
@@ -55,6 +64,7 @@ class SecurityPortalController extends Controller
                 'checked_in_at' => now(),
             ]);
 
+            // Every check-in creates an immutable visitor log row for audit/history.
             $this->logVisitor($request, $visitor, 'check_in');
 
             return redirect()->route('security.checkin', ['passcode' => $visitor->access_code])
@@ -70,6 +80,7 @@ class SecurityPortalController extends Controller
             'purpose' => ['required', 'string', 'max:255'],
         ]);
 
+        // Manual walk-ins are linked to the active resident of the selected flat.
         $resident = ResidentProfile::where('flat_id', $validated['flat_id'])->where('status', 'active')->first()?->user
             ?? User::where('role', 'resident')->where('status', 'approved')->first();
 
@@ -83,6 +94,7 @@ class SecurityPortalController extends Controller
             'purpose' => trim(($validated['category'] ?? 'walk_in').': '.$validated['purpose']),
             'visit_date' => today(),
             'expected_entry_time' => now()->format('H:i'),
+            // WALK prefix marks this as a security-created visitor rather than resident-created pass.
             'access_code' => strtoupper('WALK'.Str::random(6)),
             'status' => 'checked_in',
             'checked_in_at' => now(),
@@ -94,6 +106,9 @@ class SecurityPortalController extends Controller
             ->with('status', 'Manual visitor checked in.');
     }
 
+    /**
+     * Show checkout page and list visitors currently inside.
+     */
     public function checkout(Request $request): View
     {
         $passcode = $request->string('passcode')->upper()->toString();
@@ -104,6 +119,9 @@ class SecurityPortalController extends Controller
         ]);
     }
 
+    /**
+     * Check out a visitor and write a visitor log entry.
+     */
     public function storeCheckout(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -118,19 +136,28 @@ class SecurityPortalController extends Controller
             'checked_out_at' => now(),
         ]);
 
+        // Logs page uses this record to show checkout history.
         $this->logVisitor($request, $visitor, 'check_out');
 
         return redirect()->route('security.checkout', ['passcode' => $visitor->access_code])
             ->with('status', 'Visitor checked out.');
     }
 
+    /**
+     * Show visitor log history from real check-in/check-out records.
+     */
     public function logs(): View
     {
         return view('security.logs', [
-            'logs' => VisitorLog::with(['flat', 'securityUser'])->latest('occurred_at')->paginate(30),
+            'logs' => VisitorLog::with(['flat.building', 'securityUser', 'visitorRequest.resident'])
+                ->latest('occurred_at')
+                ->paginate(30),
         ]);
     }
 
+    /**
+     * Show emergency alerts for security response.
+     */
     public function emergency(): View
     {
         return view('security.emergency', [
@@ -141,6 +168,9 @@ class SecurityPortalController extends Controller
         ]);
     }
 
+    /**
+     * Mark an emergency resolved from the security portal.
+     */
     public function updateEmergency(EmergencyRequest $emergency): RedirectResponse
     {
         $emergency->update([
@@ -159,6 +189,9 @@ class SecurityPortalController extends Controller
         return redirect()->route('security.emergency')->with('status', 'Emergency alert resolved.');
     }
 
+    /**
+     * Create an emergency alert directly from the gate/security terminal.
+     */
     public function triggerEmergency(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -166,6 +199,7 @@ class SecurityPortalController extends Controller
             'message' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        // Security-created alerts still need a resident/flat link for existing emergency schema.
         $resident = User::where('role', 'resident')->where('status', 'approved')->first();
         abort_unless($resident !== null, 422, 'At least one approved resident is required before creating a security emergency alert.');
 
@@ -190,6 +224,9 @@ class SecurityPortalController extends Controller
         return redirect()->route('security.emergency')->with('status', 'Emergency alert dispatched.');
     }
 
+    /**
+     * List security incident reports and flats for new reports.
+     */
     public function incidents(): View
     {
         return view('security.incidents', [
@@ -198,10 +235,14 @@ class SecurityPortalController extends Controller
         ]);
     }
 
+    /**
+     * Store a security incident and notify managers.
+     */
     public function storeIncident(StoreSecurityIncidentRequest $request): RedirectResponse
     {
         $validated = $request->validated();
 
+        // Incident reports are separate from emergency alerts because they may be non-urgent.
         SecurityIncident::create([
             'reported_by' => $request->user()->id,
             'flat_id' => $validated['flat_id'] ?? null,
@@ -223,6 +264,9 @@ class SecurityPortalController extends Controller
         return redirect()->route('security.incidents')->with('status', 'Security incident report filed.');
     }
 
+    /**
+     * Find a visitor request by passcode/access code.
+     */
     private function findVisitorByCode(string $passcode): ?VisitorRequest
     {
         return VisitorRequest::with(['flat', 'resident'])
@@ -230,6 +274,9 @@ class SecurityPortalController extends Controller
             ->first();
     }
 
+    /**
+     * Record check-in/check-out activity for manager/security audit history.
+     */
     private function logVisitor(Request $request, VisitorRequest $visitor, string $eventType, ?string $vehiclePlate = null): void
     {
         VisitorLog::create([

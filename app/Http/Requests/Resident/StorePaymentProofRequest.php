@@ -7,6 +7,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StorePaymentProofRequest extends FormRequest
 {
+    /**
+     * Normalize older transaction_id field into transaction_reference.
+     */
     protected function prepareForValidation(): void
     {
         if ($this->filled('transaction_id') && ! $this->filled('transaction_reference')) {
@@ -14,11 +17,17 @@ class StorePaymentProofRequest extends FormRequest
         }
     }
 
+    /**
+     * Only residents can upload payment proofs.
+     */
     public function authorize(): bool
     {
         return $this->user()?->role === 'resident';
     }
 
+    /**
+     * Validate proof file and optional transaction details.
+     */
     public function rules(): array
     {
         return [

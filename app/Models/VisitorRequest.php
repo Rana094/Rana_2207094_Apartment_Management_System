@@ -22,6 +22,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $checked_in_at
  * @property Carbon|null $checked_out_at
  */
+/**
+ * Visitor pass requested by a resident or manually created by security.
+ */
 class VisitorRequest extends Model
 {
     use HasFactory;

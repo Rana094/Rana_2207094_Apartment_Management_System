@@ -7,6 +7,9 @@ use App\Models\User;
 
 class ComplaintPolicy
 {
+    /**
+     * Complaint can be viewed by manager, owning resident, or assigned maintenance staff.
+     */
     public function view(User $user, Complaint $complaint): bool
     {
         return $user->role === 'manager'
@@ -14,6 +17,9 @@ class ComplaintPolicy
             || $complaint->workOrders()->where('assigned_to', $user->id)->exists();
     }
 
+    /**
+     * Only managers can assign complaints to maintenance staff.
+     */
     public function assign(User $user, Complaint $complaint): bool
     {
         return $user->role === 'manager';

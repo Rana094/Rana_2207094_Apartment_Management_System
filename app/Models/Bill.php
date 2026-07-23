@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon $due_date
  * @property string $status
  * @property Carbon|null $paid_at
+ *
+ * Represents monthly dues, utility charges, facility fees, or other resident bills.
  */
 class Bill extends Model
 {
@@ -62,6 +64,9 @@ class Bill extends Model
         return $this->hasOne(PaymentTransaction::class)->latestOfMany();
     }
 
+    /**
+     * Latest unpaid payment token that can still be used by the resident.
+     */
     public function activePaymentTransaction(): HasOne
     {
         return $this->hasOne(PaymentTransaction::class)

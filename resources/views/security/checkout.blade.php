@@ -15,6 +15,7 @@
     <div class="card">
         <h3 style="margin-bottom: 1.25rem; font-size: 1.15rem; text-align: center;">Find Checked-In Visitor</h3>
 
+        {{-- GET lookup loads an active visitor by passcode before allowing the checkout POST. --}}
         <form action="{{ route('security.checkout') }}" method="GET" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
             <input type="text" name="passcode" class="form-control" placeholder="Enter visitor passcode" value="{{ request('passcode') }}" required style="font-weight: 700; text-transform: uppercase; text-align: center;">
             <button type="submit" class="btn btn-primary">Lookup</button>
@@ -36,6 +37,7 @@
                     <div>Phone Number: <strong style="color: var(--text-primary);">{{ $visitor->visitor_phone ?? '-' }}</strong></div>
                 </div>
 
+                {{-- Checkout updates the visitor request and adds a check_out visitor_logs row. --}}
                 <form action="{{ route('security.checkout.store') }}" method="POST" style="margin-top: 1.5rem;">
                     @csrf
                     <input type="hidden" name="passcode" value="{{ $visitor->access_code }}">
@@ -62,6 +64,7 @@
             <div style="margin-top: 2rem;">
                 <h4 style="margin-bottom: .75rem;">Currently Inside</h4>
                 <div style="display:flex; flex-direction:column; gap:.5rem;">
+                    {{-- This quick list is built from VisitorRequest rows that have checked_in_at but no checked_out_at. --}}
                     @foreach ($insideVisitors as $insideVisitor)
                         <a href="{{ route('security.checkout', ['passcode' => $insideVisitor->access_code]) }}" class="card-static" style="text-decoration:none; color:inherit;">
                             <strong>{{ $insideVisitor->visitor_name }}</strong>

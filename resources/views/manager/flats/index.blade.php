@@ -31,15 +31,26 @@
         <tbody>
             @forelse ($flats as $flat)
                 @php($resident = $flat->residentProfiles->first()?->user)
+                @php($pendingResident = $flat->pendingResidentRequests->first())
+                @php($isReserved = $flat->status === 'vacant' && $pendingResident)
                 <tr>
                     <td style="font-weight: 700;">{{ $flat->flat_number }}</td>
                     <td>{{ $flat->building?->name ?? '-' }}</td>
                     <td>{{ $flat->floor ?? '-' }}</td>
                     <td>{{ $flat->area_sqft ? number_format((float) $flat->area_sqft).' sq ft' : '-' }}</td>
-                    <td><span class="badge {{ $flat->status === 'vacant' ? 'badge-pending' : 'badge-approved' }}">{{ $flat->status }}</span></td>
+                    <td>
+                        @if ($isReserved)
+                            <span class="badge badge-pending-verification">pending approval</span>
+                        @else
+                            <span class="badge {{ $flat->status === 'vacant' ? 'badge-pending' : 'badge-approved' }}">{{ $flat->status }}</span>
+                        @endif
+                    </td>
                     <td>
                         @if ($resident)
                             <a href="{{ route('manager.residents.show', $resident) }}">{{ $resident->name }}</a>
+                        @elseif ($pendingResident)
+                            <span>{{ $pendingResident->name }}</span>
+                            <div class="text-xs" style="color: var(--text-muted);">Pending approval</div>
                         @else
                             <span class="text-muted">Unassigned</span>
                         @endif

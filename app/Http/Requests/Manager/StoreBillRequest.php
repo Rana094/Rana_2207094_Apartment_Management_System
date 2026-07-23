@@ -6,11 +6,17 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBillRequest extends FormRequest
 {
+    /**
+     * Only managers can generate bills.
+     */
     public function authorize(): bool
     {
         return $this->user()?->role === 'manager';
     }
 
+    /**
+     * Validate bill creation input for single-flat or bulk billing.
+     */
     public function rules(): array
     {
         return [

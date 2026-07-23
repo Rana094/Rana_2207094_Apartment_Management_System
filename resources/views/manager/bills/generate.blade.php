@@ -13,6 +13,7 @@
     <div class="card">
         @if ($errors->any()) <div class="alert alert-danger" style="margin-bottom: 1rem;">{{ $errors->first() }}</div> @endif
 
+        {{-- StoreBillRequest validates this form before ManagerPortalController creates bill records and payment transactions. --}}
         <form action="{{ route('manager.bills.store') }}" method="POST">
             @csrf
             <div class="form-group">
@@ -71,6 +72,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const checkbox = document.getElementById('bulk-billing-chk');
     const target = document.getElementById('single-target-select-container');
+    // Shows the single-flat selector only when the manager is not generating bills for every resident.
     const sync = () => target.style.display = checkbox.checked ? 'none' : 'block';
     checkbox.addEventListener('change', sync);
     sync();

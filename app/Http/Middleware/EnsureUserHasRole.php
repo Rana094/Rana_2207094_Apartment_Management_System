@@ -8,10 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserHasRole
 {
+    /**
+     * Restrict a route to one or more roles, for example role:manager or role:resident.
+     */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
 
+        // Stop users from opening another portal by manually typing its URL.
         if (! $user || ! in_array($user->role, $roles, true)) {
             abort(403, 'You are not allowed to access this portal.');
         }

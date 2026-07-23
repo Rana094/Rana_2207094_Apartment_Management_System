@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Non-emergency security report filed by security staff.
+ */
 class SecurityIncident extends Model
 {
     use HasFactory;
